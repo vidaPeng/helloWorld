@@ -29,7 +29,7 @@ func InitTracer() {
 		trace.WithBatcher(exp),
 		trace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceNameKey.String("cloud-bridge"), // ← 用新 API 写法
+			semconv.ServiceNameKey.String("helloPeng"), // ← 用新 API 写法
 		)),
 	)
 	otel.SetTracerProvider(tp)
