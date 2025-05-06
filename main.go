@@ -1,19 +1,20 @@
 package main
 
 import (
-	"fmt"
-	"strings"
+	"github.com/gin-gonic/gin"
+	"helloWorld/pkg"
+	"helloWorld/router"
+	"log"
 )
 
 func main() {
-	l := stringsToList("hello;world")
-	fmt.Println(l)
-}
+	// 初始化日志组件
+	pkg.InitLogger()
+	defer pkg.Sync()
 
-func stringsToList(str string) []string {
-	l := strings.Split(str, ";")
-	if l[len(l)-1] == "" {
-		l = l[:len(l)-1]
+	r := gin.New()
+	router.SetupRoutes(r)
+	if err := r.Run(":80"); err != nil {
+		log.Fatalf("Failed to run server: %v", err)
 	}
-	return l
 }
