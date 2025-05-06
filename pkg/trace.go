@@ -27,7 +27,7 @@ func InitTracer() {
 		trace.WithBatcher(exporter),
 		trace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceName("cloud-bridge"),
+			semconv.ServiceName("hello_peng"),
 		)),
 	)
 	otel.SetTracerProvider(tracerProvider)

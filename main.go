@@ -12,6 +12,8 @@ func main() {
 	pkg.InitLogger()
 	defer pkg.Sync()
 
+	pkg.InitTracer()
+
 	r := gin.New()
 	router.SetupRoutes(r)
 	if err := r.Run(":80"); err != nil {

@@ -1,0 +1,518 @@
+# OpenTelemetry Collector 默认 values 中文注释版
+
+nameOverride: ""
+fullnameOverride: "opentelemetry-collector"
+
+# Collector 运行模式，可选值："daemonset" | "deployment" | "statefulset"
+mode: "deployment"
+
+# 指定资源部署到的命名空间
+namespaceOverride: "observable"
+
+#--------------------------------------------
+# 预设功能开关 presets
+#--------------------------------------------
+# 提示：若需要移除预设中的组件，请不要用这里的 presets，
+#       而应在 .Values.config 中手动编写 receiver/processor，并关闭对应 preset。
+presets:
+  logsCollection:          # 主机日志收集（filelog receiver） 适用于 DaemonSet
+    enabled: false         # 是否开启
+    includeCollectorLogs: false  # 是否同时采集 Collector 自身日志
+    storeCheckpoints: false      # 在宿主机目录写入 filelog 游标 (需 root)
+    maxRecombineLogSize: 102400  # 组合多行日志的最大字节数
+
+  hostMetrics:             # 采集节点 CPU/Mem/Disk 等 (hostmetrics receiver)
+    enabled: false
+
+  kubernetesAttributes:    # 给所有信号追加 k8s 元数据 (k8sattributes processor)
+    enabled: false
+    extractAllPodLabels: false       # 是否提取全部 Pod Label
+    extractAllPodAnnotations: false  # 是否提取全部 Pod Annotation
+
+  kubeletMetrics:          # 从 kubelet API 采集容器指标 (kubeletstats receiver)
+    enabled: false
+
+  kubernetesEvents:        # 采集 k8s Event (k8sobjects receiver)
+    enabled: false
+
+  clusterMetrics:          # 采集集群级指标 (k8s_cluster receiver)
+    enabled: false
+
+#--------------------------------------------
+# ConfigMap 处理
+#--------------------------------------------
+configMap:
+  create: true               # Helm 是否生成 ConfigMap
+  existingName: ""           # 使用已存在的 ConfigMap 名称
+  # existingPath: ""        # 自定义模板路径（高级用法）
+
+#--------------------------------------------
+# Collector 自身 telemetry 通过 OTLP 输出（实验特性）
+#--------------------------------------------
+internalTelemetryViaOTLP:
+  endpoint: ""              # 统一 OTLP HTTP 目标地址
+  headers: []               # 全局 header
+  traces:
+    enabled: false
+    endpoint: ""
+    headers: []
+  metrics:
+    enabled: false           # 若开启会移除默认 prometheus receiver
+    endpoint: ""
+    headers: []
+  logs:
+    enabled: false
+    endpoint: ""
+    headers: []
+
+#--------------------------------------------
+# Collector 主配置 (.Values.config)
+#--------------------------------------------
+config:
+  exporters:
+    clickhouse:      # 导出 ch
+      #      endpoint: tcp://chi-simple-01-simple-0-0-0.chi-simple-01-simple-0-0.default.svc.cluster.local:9000?dial_timeout=5s               # or http://...
+      endpoint: https://cdub5ox9ot.westus3.azure.clickhouse.cloud:8443
+      username: default
+      password: Snt7jH~8WEKQD
+      database: default                                        # 自动建库
+      ttl: 24h                                                # Trace/Log/Metric 都存 1 天
+      compress: lz4
+      async_insert: true                                      # 提高写入吞吐
+      create_schema: false                                     # ⬅️ 上生产记得一定要关闭
+      #      traces_table_name: otel_min_traces
+      timeout: 5s
+    otlp/tempo:               # ← 新增
+      endpoint: tempo-tempo-distributed-distributor.observable.svc:4317
+      tls:
+        insecure: true       # 若未启用 TLS
+
+  extensions:
+    health_check:           # 健康检查扩展，供存活/就绪探针使用
+      endpoint: "0.0.0.0:13133"
+
+  processors:
+    batch:
+      timeout: 5s
+      send_batch_size: 5000
+    memory_limiter:         # 根据容器内存限制自动计算阈值
+      check_interval: 5s
+      limit_percentage: 80
+      spike_limit_percentage: 25
+    attributes/cluster_name:
+      actions:
+        - action: upsert
+          key: cluster.name
+#          value: oci-wus-k8s-k8s-sre  # 每个集群填自己的名字
+          value: azure-wus-k8s-k8s-beta  # 每个集群填自己的名字
+
+
+  receivers:
+    #    jaeger:                 # 兼容 Jaeger 协议
+    #      protocols:
+    #        grpc:
+    #          endpoint: ${env:MY_POD_IP}:14250
+    #        thrift_http:
+    #          endpoint: ${env:MY_POD_IP}:14268
+    #        thrift_compact:
+    #          endpoint: ${env:MY_POD_IP}:6831
+
+    otlp:                   # 主收流协议
+      protocols:
+        grpc:
+          endpoint: ${env:MY_POD_IP}:4317
+        http:
+          endpoint: ${env:MY_POD_IP}:4318
+
+  #    prometheus:             # 用于拉取外部 Prometheus 指标
+  #      config:
+  #        scrape_configs:
+  #          - job_name: opentelemetry-collector
+  #            scrape_interval: 10s
+  #            static_configs:
+  #              - targets: [${env:MY_POD_IP}:8888]
+
+  #    zipkin:
+  #      endpoint: ${env:MY_POD_IP}:9411
+
+  service:
+    telemetry:              # Collector 自身 Prometheus 指标暴露设置
+      metrics:
+        readers:
+          - pull:
+              exporter:
+                prometheus:
+                  host: ${env:MY_POD_IP}
+                  port: 8888
+    extensions: [health_check]
+    pipelines:
+      #      logs:
+      #        exporters:
+      #          - clickhouse
+      #        processors:
+      #          - memory_limiter
+      #          - batch
+      #        receivers:
+      #          - otlp
+      #      metrics:
+      #        receivers: [otlp, prometheus]
+      #        processors: [memory_limiter, batch]
+      #        exporters: [debug]
+      traces/tempo:
+        exporters:
+          - otlp/tempo
+        #          - debug
+        processors:
+          - memory_limiter
+          - batch
+        receivers:
+          - otlp
+      #          - jaeger
+      #          - zipkin
+      traces/clickhouse:
+        exporters:
+          - clickhouse
+          - debug
+        processors:
+          - attributes/cluster_name
+          - memory_limiter
+        #          - batch
+        receivers:
+          - otlp
+
+# 如需完全自定义 collector.yaml，可用 alternateConfig 覆盖
+alternateConfig: {}
+
+#--------------------------------------------
+# 镜像与启动命令
+#--------------------------------------------
+image:
+  repository: otel/opentelemetry-collector-contrib
+  tag: 0.123.0  # 或你需要锁定的具体版本
+  pullPolicy: IfNotPresent
+  digest: ""
+
+command:
+  name: ""                # 自定义可执行文件名
+  extraArgs: []
+
+#--------------------------------------------
+# ServiceAccount & RBAC
+#--------------------------------------------
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+clusterRole:
+  create: false
+  annotations: {}
+  name: ""
+  rules: []
+  clusterRoleBinding:
+    annotations: {}
+    name: ""
+
+#--------------------------------------------
+# 安全与调度
+#--------------------------------------------
+podSecurityContext: {}
+securityContext: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+priorityClassName: ""
+
+#--------------------------------------------
+# 端口暴露
+#--------------------------------------------
+ports:
+  otlp:
+    enabled: true
+    containerPort: 4317
+    servicePort: 4317
+    hostPort: 4317
+    protocol: TCP
+    # nodePort: 30317
+    appProtocol: grpc
+  otlp-http:
+    enabled: true
+    containerPort: 4318
+    servicePort: 4318
+    hostPort: 4318
+    protocol: TCP
+  jaeger-compact:
+    enabled: false
+    containerPort: 6831
+    servicePort: 6831
+    hostPort: 6831
+    protocol: UDP
+  jaeger-thrift:
+    enabled: false
+    containerPort: 14268
+    servicePort: 14268
+    hostPort: 14268
+    protocol: TCP
+  jaeger-grpc:
+    enabled: false
+    containerPort: 14250
+    servicePort: 14250
+    hostPort: 14250
+    protocol: TCP
+  zipkin:
+    enabled: false
+    containerPort: 9411
+    servicePort: 9411
+    hostPort: 9411
+    protocol: TCP
+  metrics:
+    # The metrics port is disabled by default. However you need to enable the port
+    # in order to use the ServiceMonitor (serviceMonitor.enabled) or PodMonitor (podMonitor.enabled).
+    enabled: true
+    containerPort: 8888
+    servicePort: 8888
+    protocol: TCP
+#--------------------------------------------
+# 资源与内存限额
+#--------------------------------------------
+useGOMEMLIMIT: true
+resources:
+  limits:
+    cpu: 500m
+    memory: 1G
+
+# -----------------------------------------------------------------------------
+# Pod 级别元数据与调度相关配置
+# -----------------------------------------------------------------------------
+podAnnotations: {}           # 给 Pod 加注解
+podLabels: {}                # 给 Pod 加标签
+
+# 给所有 Collector 生成的资源统一追加的标签（支持 Helm 模板语法）
+additionalLabels:
+  app: opentelemetry-collector
+# 例如：app.kubernetes.io/part-of: my-app
+
+# 是否启用 HostNetwork，让 Pod 直接使用宿主机网络命名空间
+hostNetwork: false
+
+# 自定义 /etc/hosts 条目，可用于固定域名
+hostAliases: []              # 示例：
+#  - ip: "1.2.3.4"
+#    hostnames:
+#      - "my.host.com"
+
+# Pod DNS 策略：ClusterFirst / ClusterFirstWithHostNet / Default / None
+dnsPolicy: ""
+
+# 当 dnsPolicy= None 时，可在此自定义 DNS 服务器、搜索域等
+dnsConfig: {}
+
+# 指定自定义调度器名称（若集群中存在多调度器）
+schedulerName: ""
+
+# -----------------------------------------------------------------------------
+# Deployment 专用副本与历史配置
+# -----------------------------------------------------------------------------
+replicaCount: 1              # Collector 副本数量（仅 deployment 模式生效）
+revisionHistoryLimit: 10     # 保留旧 ReplicaSet 的数量
+
+# -----------------------------------------------------------------------------
+# 额外注解（应用到 Deployment/StatefulSet 等顶级资源）
+# -----------------------------------------------------------------------------
+annotations: {}
+
+# -----------------------------------------------------------------------------
+# Sidecar & InitContainer 支持
+# -----------------------------------------------------------------------------
+extraContainers: []          # 额外 sidecar 容器列表，支持 Helm 模板
+# - name: git-sync
+#   image: ghcr.io/some/git-sync:latest
+#   volumeMounts:
+#     - name: config
+#       mountPath: /etc/collector/custom
+
+initContainers: []           # Init 容器列表，可用来做权限修复等
+# - name: fix-perm
+#   image: busybox:latest
+#   command: ["sh", "-c", "chown -R 10001: /var/lib/otel"]
+
+# -----------------------------------------------------------------------------
+# Pod 生命周期钩子
+# -----------------------------------------------------------------------------
+lifecycleHooks: {}           # preStop / postStart 等
+# preStop:
+#   exec:
+#     command: ["sleep", "5"]
+
+# -----------------------------------------------------------------------------
+# 健康探针（liveness / readiness / startup）
+# 端口 13133、路径 / 已由 health_check 扩展暴露
+# -----------------------------------------------------------------------------
+livenessProbe:
+  # 启动后多久开始探测
+  # initialDelaySeconds: 1
+  # 探测间隔（秒）
+  # periodSeconds: 10
+  # 超时时间（秒）
+  # timeoutSeconds: 1
+  # 失败阈值
+  # failureThreshold: 1
+  httpGet:
+    port: 13133
+    path: /
+
+readinessProbe:
+  # initialDelaySeconds: 1
+  # periodSeconds: 10
+  # timeoutSeconds: 1
+  # successThreshold: 1
+  # failureThreshold: 1
+  httpGet:
+    port: 13133
+    path: /
+
+startupProbe: {}              # 如 Collector 启动慢，可在此单独设置
+#  initialDelaySeconds: 1
+#  periodSeconds: 10
+#  failureThreshold: 30
+#  httpGet:
+#    port: 13133
+#    path: /
+
+service:
+  # 是否创建 Service
+  # 默认在 mode ≠ daemonset 时自动创建；
+  # 若 mode = daemonset 也想创建，则需显式开启 enabled
+  # enabled: true
+
+  type: ClusterIP          # Service 类型，可改为 LoadBalancer / NodePort 等
+  # trafficDistribution: PreferClose   # GKE 内部流量策略
+  # type: LoadBalancer                 # 若暴露公网负载均衡可改此项
+  # loadBalancerIP: 1.2.3.4            # 固定 LB IP
+  # loadBalancerSourceRanges: []       # 允许访问的 CIDR
+
+  # 若 Service 类型为 LoadBalancer，默认 externalTrafficPolicy = Cluster
+  # 可改为 Local 以保留客户端源 IP
+  # externalTrafficPolicy: Cluster
+
+  annotations: {}          # 给 Service 添加注解
+
+  # daemonset 模式下 Service 默认 internalTrafficPolicy=Local
+  # 可手动改为 Cluster，但不推荐
+  # internalTrafficPolicy: Cluster
+
+ingress:
+  enabled: false           # 是否创建 Ingress
+  # annotations: {}        # Ingress 注解，如 cert-manager / rewrite
+  # ingressClassName: nginx
+  # hosts:                 # 域名与路径
+  #   - host: collector.example.com
+  #     paths:
+  #       - path: /
+  #         pathType: Prefix
+  #         port: 4318
+  # tls:                  # TLS 证书
+  #   - secretName: collector-tls
+  #     hosts:
+  #       - collector.example.com
+
+  # 如果需要不同注解风格的多条 Ingress，可在此追加
+  additionalIngresses: []
+  # - name: cloudwatch
+  #   ingressClassName: nginx
+  #   annotations: {}
+  #   hosts:
+  #     - host: collector.example.com
+  #       paths:
+  #         - path: /
+  #           pathType: Prefix
+  #           port: 4318
+  #   tls:
+  #     - secretName: collector-tls
+  #       hosts:
+  #         - collector.example.com
+
+podMonitor:
+  # PodMonitor 默认抓取 metrics 端口
+  # 必须同时开启 ports.metrics.enabled
+  enabled: false
+  metricsEndpoints:
+    - port: metrics         # 指定抓取端口
+      # interval: 15s       # 抓取间隔
+
+  extraLabels: {}           # 额外标签供 Prometheus Operator 选取
+  #   release: kube-prometheus-stack
+
+serviceMonitor:
+  # ServiceMonitor 同样抓取 metrics 端口
+  # 也依赖 ports.metrics.enabled
+  enabled: false
+  metricsEndpoints:
+    - port: metrics
+      # interval: 15s
+
+  extraLabels: {}
+  #   release: kube-prometheus-stack
+  # relabelings / metricRelabelings 可做标签重写与指标过滤
+  relabelings: []
+  metricRelabelings: []
+
+# 仅 deployment 模式可用的 PodDisruptionBudget
+podDisruptionBudget:
+  enabled: false
+  # minAvailable: 2
+  # maxUnavailable: 1
+
+# 仅 deployment / statefulset 模式可用的 HPA 自动扩缩容
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  behavior: {}                     # 自定义 HPA 行为
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+rollout:
+  rollingUpdate: {}                # 自定义 maxSurge / maxUnavailable
+  # 注意：daemonset 且使用 hostPort 时不可设置 maxSurge
+  strategy: RollingUpdate          # 也可改为 Recreate
+
+prometheusRule:
+  enabled: false                   # 是否生成告警规则
+  groups: []                       # 自定义 rule 组
+  defaultRules:
+    enabled: false                 # 是否启用内置 Collector 告警规则
+  extraLabels: {}                  # 额外标签供 Prometheus Selector 使用
+
+statefulset:
+  volumeClaimTemplates: []         # 自定义 PVC 模板
+  podManagementPolicy: "Parallel"  # 也可设为 OrderedReady
+  persistentVolumeClaimRetentionPolicy:
+    enabled: false
+    whenDeleted: Retain            # 删除 StatefulSet 时 PVC 行为
+    whenScaled: Retain
+
+networkPolicy:
+  enabled: false                   # 是否生成 NetworkPolicy
+  annotations: {}                  # NetworkPolicy 注解
+
+  # 允许进入的来源，默认仅限同一命名空间
+  allowIngressFrom: []
+  # - namespaceSelector: {}
+  # - ipBlock:
+  #     cidr: 192.168.1.0/24
+
+  extraIngressRules: []            # 为特定端口追加自定义 ingress 规则
+
+  # 限制 Pod 外出流量
+  egressRules: []
+  # - to:
+  #     - ipBlock:
+  #         cidr: 10.0.0.0/16
+  #   ports:
+  #     - port: 1234
+  #       protocol: TCP
+
+# 是否让多个容器共享同一进程命名空间（ps、top 可见）
+shareProcessNamespace: false
