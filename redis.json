@@ -1,0 +1,22 @@
+{
+  "cloud_name": "oci",
+  "cloud_type": "redis",
+  "cloud_perform_type": "create",
+  "cloud_data": {
+    "displayName": "oci-wus-zawa-beta-redis-beta",
+    "compartmentId": "ocid1.compartment.oc1..aaaaaaaak7mv56vfx42qasikn4heoyvdkbeib7eyf6oeppghuuxh7joeqisq",
+    "nodeCount": 1,
+    "softwareVersion": "REDIS_7_0",
+    "nodeMemoryInGBs": 2,
+    "subnetId": "ocid1.subnet.oc1.phx.aaaaaaaao7o6k6xoudz34rif5iqvob6tr3g5pxdbsnpi33zrs4ftdper4bqa",
+    "clusterMode": "NONSHARDED",
+    "shardCount": null,
+    "nsgIds": [],
+    "freeformTags": {},
+    "definedTags": {
+      "pixocial": {
+        "pixcc_id": "240005"
+      }
+    }
+  }
+}

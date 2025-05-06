@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: '1'
+    meta.helm.sh/release-name: prometheus
+    meta.helm.sh/release-namespace: observable
+  labels:
+    app: kube-prometheus-stack-operator
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: kube-prometheus-stack
+    app.kubernetes.io/version: 35.5.1
+    chart: kube-prometheus-stack-35.5.1
+    heritage: Helm
+    pixcc_id: '210005'
+    release: prometheus
+  name: prometheus-kube-prometheus-operator
+  namespace: observable
+  resourceVersion: '132129007'
+  uid: 2d95f61f-37de-40f6-a336-a53565c8f9e9
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: kube-prometheus-stack-operator
+      release: prometheus
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: kube-prometheus-stack-operator
+        app.kubernetes.io/instance: prometheus
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: kube-prometheus-stack
+        app.kubernetes.io/version: 35.5.1
+        chart: kube-prometheus-stack-35.5.1
+        heritage: Helm
+        release: prometheus
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: pool-type
+                    operator: In
+                    values:
+                      - observable
+      containers:
+        - args:
+            - '--kubelet-service=kube-system/prometheus-kube-prometheus-kubelet'
+            - '--localhost=127.0.0.1'
+            - >-
+              --prometheus-config-reloader=quay.io/prometheus-operator/prometheus-config-reloader:v0.56.3
+            - '--config-reloader-cpu-request=200m'
+            - '--config-reloader-cpu-limit=200m'
+            - '--config-reloader-memory-request=50Mi'
+            - '--config-reloader-memory-limit=50Mi'
+            - '--thanos-default-base-image=quay.io/thanos/thanos:v0.25.2'
+            - '--web.enable-tls=true'
+            - '--web.cert-file=/cert/cert'
+            - '--web.key-file=/cert/key'
+            - '--web.listen-address=:10250'
+            - '--web.tls-min-version=VersionTLS13'
+          image: 'quay.io/prometheus-operator/prometheus-operator:v0.56.3'
+          imagePullPolicy: IfNotPresent
+          name: kube-prometheus-stack
+          ports:
+            - containerPort: 10250
+              name: https
+              protocol: TCP
+          resources: {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /cert
+              name: tls-secret
+              readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+      serviceAccount: prometheus-kube-prometheus-operator
+      serviceAccountName: prometheus-kube-prometheus-operator
+      terminationGracePeriodSeconds: 30
+      tolerations:
+        - effect: NoSchedule
+          key: pool-type
+          operator: Equal
+          value: observable
+      volumes:
+        - name: tls-secret
+          secret:
+            defaultMode: 420
+            secretName: prometheus-kube-prometheus-admission

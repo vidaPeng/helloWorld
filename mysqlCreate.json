@@ -1,0 +1,42 @@
+{
+  "cloud_name":"oci",
+  "cloud_type": "mysql",
+  "cloud_perform_type": "create",
+  "cloud_data": {
+    "displayName": "peng-mysql-beta",
+    "shapeName": "MySQL.2",
+    "definedTags": {
+      "pixocial": {
+        "pixcc_id": "240005"
+      }
+    },
+    "isHighlyAvailable": false,
+    "availabilityDomain": "SpFr:PHX-AD-1",
+    "subnetId": "ocid1.subnet.oc1.phx.aaaaaaaa6xrksa2kx4u2zl4wj75vrelge2pq3u7nq7h6bx5memapcscqlfiq",
+    "dataStorage": {
+      "isAutoExpandStorageEnabled": true,
+      "maxStorageSizeInGBs": 32768
+    },
+    "accessMode": "UNRESTRICTED",
+    "dataStorageSizeInGBs": 50,
+    "adminUsername": "root",
+    "adminPassword": "dGVzdC16YXdh+LWJl",
+    "compartmentId": "ocid1.compartment.oc1..aaaaaaaak7mv56vfx42qasikn4heoyvdkbeib7eyf6oeppghuuxh7joeqisq",
+    "backupPolicy": {
+      "definedTags": {
+        "pixocial": {
+          "pixcc_id": "240005"
+        }
+      },
+      "isEnabled": true,
+      "retentionInDays": 7,
+      "windowStartTime": "15:00:00"
+    },
+    "databaseMode": "WRITE",
+    "configurationId": "ocid1.mysqlconfiguration.oc1.phx.aaaaaaaaromaq77ena6rr5rgh65us5oxwutsln6aq2xtnlovijxutzpzh3tq",
+    "maintenance": {
+      "windowStartTime": "sat-15:00"
+    },
+    "mysqlVersion": "8.0.41"
+  }
+}

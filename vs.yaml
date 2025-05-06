@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: duffle-cache
+  namespace: biz-bridge
+spec:
+  gateways:
+    - istio-ingress/istio-ingress-gateway
+  hosts:
+    - duffle-cache.biz-bridge.grpc.pix.com
+  http:
+    - match:
+        - port: 9000
+      route:
+        - destination:
+            host: duffle-cache
+            port:
+              number: 9000
