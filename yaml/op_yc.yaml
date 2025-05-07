@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: otel-trace-load-20k
+  namespace: test
+spec:
+  completions: 1          # 只跑一次
+  parallelism: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: gen
+          image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:latest
+          args:
+            - traces
+            - --otlp-endpoint=opentelemetry-collector.observable.svc:4317
+            - --otlp-insecure
+            - --rate=20000
+            - --duration=5m
+            - --workers=40
+            - --service=telemetrygen-load   # ← 单一 service.name

@@ -11,8 +11,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-var tracerProvider *trace.TracerProvider
-
 func InitTracer() {
 	ctx := context.Background()
 

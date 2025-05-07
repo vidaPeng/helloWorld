@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: opentelemetry-collector-monitor            # 随意取名，保持唯一
+  namespace: observable                            # 建议与 Service 同 namespace
+  labels:
+    release: prometheus                            # ⚠️ 必须与 Prometheus CR 的 selector 对应
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: otel-collector
+      app.kubernetes.io/name: opentelemetry-collector
+      component: standalone-collector
+  namespaceSelector:
+    matchNames:
+      - observable                                 # ← Service 所在 namespace
+  endpoints:
+    - port: metrics                                # 对应 Service.spec.ports[].name
+      path: /metrics                               # opentelemetry-collector 默认 metrics 路径
+      interval: 30s                                # 抓取频率，可按需调整
+      scrapeTimeout: 5s                            # 超时，可选

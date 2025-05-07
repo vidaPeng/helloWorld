@@ -158,25 +158,25 @@ config:
       #        receivers: [otlp, prometheus]
       #        processors: [memory_limiter, batch]
       #        exporters: [debug]
-      traces/tempo:
-        exporters:
-          - otlp/tempo
-        #          - debug
-        processors:
-          - memory_limiter
-          - batch
-        receivers:
-          - otlp
+#      traces/tempo:
+#        exporters:
+#          - otlp/tempo
+#        #          - debug
+#        processors:
+#          - memory_limiter
+#          - batch
+#        receivers:
+#          - otlp
       #          - jaeger
       #          - zipkin
       traces/clickhouse:
         exporters:
           - clickhouse
-          - debug
+#          - debug
         processors:
           - attributes/cluster_name
           - memory_limiter
-        #          - batch
+          - batch
         receivers:
           - otlp
 
