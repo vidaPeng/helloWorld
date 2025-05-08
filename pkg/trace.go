@@ -8,7 +8,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
-	"google.golang.org/grpc"
 )
 
 func InitTracer() {
@@ -17,7 +16,6 @@ func InitTracer() {
 	exp, err := otlptracegrpc.New(ctx,
 		otlptracegrpc.WithEndpoint("opentelemetry-collector.observable.svc:4317"),
 		otlptracegrpc.WithInsecure(),
-		otlptracegrpc.WithDialOption(grpc.WithBlock()),
 	)
 	if err != nil {
 		log.Fatalf("failed to create exporter: %v", err)
@@ -36,7 +34,6 @@ func InitTracer() {
 	otel.SetTextMapPropagator(
 		propagation.NewCompositeTextMapPropagator(
 			propagation.TraceContext{}, // 解析 traceparent / 注入 traceparent
-			propagation.Baggage{},      // 可选
 		),
 	)
 }
