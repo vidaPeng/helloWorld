@@ -24,7 +24,7 @@ WORKDIR /app
 COPY --from=builder /server /app/server
 
 # 4️⃣ 设置 OTel 导出端点
-ENV OTEL_EXPORTER_OTLP_ENDPOINT=dns:///opentelemetry-collector.observable.svc:4317 \
+ENV OTEL_EXPORTER_OTLP_ENDPOINT=dns:///opentelemetry-collector.observable.svc.cluster.local:4317 \
     OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
     OTEL_EXPORTER_OTLP_INSECURE=true \
     OTEL_TRACES_EXPORTER=otlp \
