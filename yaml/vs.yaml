@@ -1,18 +1,18 @@
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: duffle-cache
-  namespace: biz-bridge
+  name: nebula-store-sts
+  namespace: devops
 spec:
   gateways:
     - istio-ingress/istio-ingress-gateway
   hosts:
-    - duffle-cache.biz-bridge.grpc.pix.com
+    - sts.object.pix.com
   http:
     - match:
-        - port: 9000
+        - port: 80
       route:
         - destination:
-            host: duffle-cache
+            host: nebula-store-sts
             port:
-              number: 9000
+              number: 80
