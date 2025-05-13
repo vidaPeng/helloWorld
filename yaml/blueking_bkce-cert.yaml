@@ -4,9 +4,7 @@ data:
   tls.key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUhQTW5lRis5TmR2QWU0RUUvNDJRYkRISG9oaFBRWk8xQXVaQU02U25FL1lvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFa2pXUjljVzRWVHMrbGVMV0g4MnhRYVlmdDg5Ymtab2liMHB4L052OHUvY0wwUjZKTjh2LwphWUVFQmY5TUdBVlZyaXVYVjdWNUVhZUp0ei9kOUdLYk13PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
 kind: Secret
 metadata:
-  creationTimestamp: "2025-03-12T11:15:57Z"
   name: bkce-cert
-  namespace: blueking
-  resourceVersion: "52609129"
-  uid: 91bb6005-7427-47cd-b608-77399754cd08
 type: kubernetes.io/tls
+  
+  kubectl create secret tls bkce-cert --cert=k.cer --key=k.key -n blueking --dry-run=client -o yaml | kubectl apply -f -
