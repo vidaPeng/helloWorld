@@ -1,18 +1,18 @@
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: nebula-store-sts
+  name: nebula-store-sts-bash
   namespace: devops
 spec:
   gateways:
     - istio-ingress/istio-ingress-gateway
   hosts:
-    - sts.object.pix.com
+    - nebula-store-sts-bash.devops.pix.com
   http:
     - match:
         - port: 80
       route:
         - destination:
-            host: nebula-store-sts
+            host: nebula-store-sts-bash
             port:
               number: 80
