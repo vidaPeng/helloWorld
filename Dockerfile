@@ -26,8 +26,8 @@ COPY --from=builder /server /app/server
 # 4️⃣ 设置 OTel 导出端点
 ENV OTEL_EXPORTER_OTLP_ENDPOINT=http://opentelemetry-collector.observable.svc:4318 \
     OTEL_TRACES_EXPORTER=otlp \
-    OTEL_SERVICE_NAME=my-go-service \
-    OTEL_GO_AUTO_DISABLE_METRICS=true
+    OTEL_SERVICE_NAME=helloWorld \
+    OTEL_GO_AUTO_DISABLE_METRICS=true \
     OTEL_EXPORTER_OTLP_INSECURE=true
 
 ENTRYPOINT ["/app/server"]
