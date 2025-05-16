@@ -104,7 +104,8 @@ config:
         - action: upsert
           key: cluster.name
 #          value: oci-wus-k8s-k8s-sre  # 每个集群填自己的名字
-          value: azure-wus-k8s-k8s-beta  # 每个集群填自己的名字
+#          value: azure-wus-k8s-beta  # 每个集群填自己的名字
+          value: oci-wus-k8s-beta
 
 
   receivers:
