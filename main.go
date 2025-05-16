@@ -12,7 +12,7 @@ func main() {
 	pkg.InitLogger()
 	defer pkg.Sync()
 
-	//pkg.InitTracer()
+	pkg.InitTracer()
 
 	r := gin.New()
 	router.SetupRoutes(r)

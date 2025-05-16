@@ -3,7 +3,9 @@ package router
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 	"net/http"
 )
 
@@ -13,7 +15,13 @@ func SetupRoutes(r *gin.Engine) {
 		SkipPaths: []string{"/ping"}, //配置跳过 /ping 的日志
 	}), gin.Recovery())
 	r.GET("/ping", func(c *gin.Context) {
-		_, span := tracer.Start(context.Background(), "ping")
+		ctx := otel.GetTextMapPropagator().Extract(
+			// 从 header 里面自动提取 trace 链路相关数据
+			c.Request.Context(),
+			propagation.HeaderCarrier(c.Request.Header),
+		)
+
+		_, span := tracer.Start(ctx, "ping")
 		defer span.End()
 
 		c.JSON(http.StatusOK, gin.H{
@@ -27,14 +35,16 @@ func SetupRoutes(r *gin.Engine) {
 		defer span.End()
 
 		// 创建带 traceparent header 的 HTTP 请求
-		req, err := http.NewRequestWithContext(context.Background(), "GET", "http://test-oci-hello-peng.pixocial.com/ping", nil)
+		req, err := http.NewRequest("GET", "http://test-oci-hello-peng.pixocial.com/ping", nil)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 		// 用 otelhttp 自动注入 traceparent
-		client := http.Client{}
+		client := http.Client{
+			Transport: otelhttp.NewTransport(http.DefaultTransport),
+		}
 		resp, err := client.Do(req)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
