@@ -1,36 +1,30 @@
-# 第一阶段：构建 Go 应用
+# ---------- build stage ----------
 FROM golang:1.24 AS builder
-
 WORKDIR /app
 
-# 复制 go.mod 和 go.sum 先做依赖缓存（提升构建效率）
-COPY go.mod ./
+# 1. 先缓存依赖
+COPY go.mod go.sum ./
 RUN go mod download
 
-# 再复制项目代码
+# 2. 再复制其余代码
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /server .main.go
+# 3. 编译
+#   - CGO_DISABLED=0 生成静态二进制，适合扔到 distroless/alpine
+#   - 如果 main.go 就在根目录，可直接 `go build -o /server .`
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -o /server ./main.go
 
-# 第二阶段：使用更小的基础镜像运行程序
+# ---------- runtime stage ----------
 FROM alpine:latest
-
-# 可选：使用非 root 用户更安全（记得开放文件或端口权限）
-# RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
 WORKDIR /app
 
-# 可选：创建配置文件目录（如果你的程序依赖 conf）
-RUN mkdir -p /app/conf
+# 可选：更安全的非 root 运行
+# RUN addgroup -S app && adduser -S app -G app
+# USER app
 
-# 从构建阶段复制可执行文件
-COPY --from=builder /server .
+COPY --from=builder /server /app/server
+# 如果需要静态文件 / 配置文件，同样 COPY 过来
+# COPY conf/ /app/conf/
 
-# 可选：复制静态文件或配置文件（如果有）
-# COPY ./conf /app/conf
-
-# 可选：切换到非 root 用户运行（如上所设）
-# USER appuser
-
-# 启动入口
 ENTRYPOINT ["/app/server"]
