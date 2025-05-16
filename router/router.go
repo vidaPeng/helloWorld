@@ -31,11 +31,11 @@ func SetupRoutes(r *gin.Engine) {
 
 	r.GET("/test", func(c *gin.Context) {
 		// 从 Gin 的 request 中获取上下文
-		_, span := tracer.Start(context.Background(), "HelloTest")
+		ctx, span := tracer.Start(context.Background(), "HelloTest")
 		defer span.End()
 
 		// 创建带 traceparent header 的 HTTP 请求
-		req, err := http.NewRequest("GET", "http://test-oci-hello-peng.pixocial.com/ping", nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", "http://test-oci-hello-peng.pixocial.com/ping", nil)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
