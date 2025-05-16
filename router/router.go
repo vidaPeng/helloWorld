@@ -5,7 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 	"net/http"
 )
 
@@ -31,7 +33,15 @@ func SetupRoutes(r *gin.Engine) {
 
 	r.GET("/test", func(c *gin.Context) {
 		// 从 Gin 的 request 中获取上下文
-		ctx, span := tracer.Start(context.Background(), "HelloTest")
+		ctx, span := tracer.Start(
+			context.Background(),
+			"HelloTest",
+			trace.WithAttributes(
+				attribute.String("env", "dev"),
+				attribute.Int64("version", 1),
+				attribute.Bool("cache_hit", false),
+			),
+		)
 		defer span.End()
 
 		// 创建带 traceparent header 的 HTTP 请求
