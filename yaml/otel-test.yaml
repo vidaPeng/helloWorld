@@ -1,0 +1,16 @@
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: hello-peng-tracing
+  namespace: devops
+spec:
+  selector:
+    matchLabels:
+      app: hello-peng            # Pod 上的 label
+  tracing:
+    - providers:
+        - name: otel-tracing
+      customTags:
+        svc:
+          literal: { value: hello-peng }
+      randomSamplingPercentage: 100

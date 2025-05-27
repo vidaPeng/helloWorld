@@ -13,9 +13,6 @@ import (
 
 func SetupRoutes(r *gin.Engine) {
 	var tracer = otel.Tracer("hello_peng")
-	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{
-		SkipPaths: []string{"/ping"}, //配置跳过 /ping 的日志
-	}), gin.Recovery())
 	r.GET("/ping", func(c *gin.Context) {
 		ctx := otel.GetTextMapPropagator().Extract(
 			// 从 header 里面自动提取 trace 链路相关数据

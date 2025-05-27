@@ -99,13 +99,11 @@ config:
       check_interval: 5s
       limit_percentage: 80
       spike_limit_percentage: 25
-    attributes/cluster_name:
-      actions:
+    resource:
+      attributes:
         - action: upsert
           key: cluster.name
-#          value: oci-wus-k8s-k8s-sre  # 每个集群填自己的名字
-#          value: azure-wus-k8s-beta  # 每个集群填自己的名字
-          value: oci-wus-k8s-beta
+          value: azure-wus-k8s-beta
 
 
   receivers:
@@ -175,7 +173,7 @@ config:
           - clickhouse
 #          - debug
         processors:
-          - attributes/cluster_name
+          - resource
           - memory_limiter
           - batch
         receivers:
