@@ -3,7 +3,7 @@ package router
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"io"
 	"net/http"
 )
 
@@ -38,16 +38,16 @@ func SetupRoutes(r *gin.Engine) {
 		//defer span.End()
 
 		// 创建带 traceparent header 的 HTTP 请求
-		req, err := http.NewRequestWithContext(context.Background(), "GET", "http://test-oci-hello-peng.pixocial.com/ping", nil)
+
+		req, err := http.NewRequestWithContext(context.Background(), "GET", "https://cloud-bridge.devops.pixocial.com/cloud/ping", nil)
+		//req, err := http.NewRequestWithContext(context.Background(), "GET", "http://test-oci-hello-peng.pixocial.com/ping", nil)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 		// 用 otelhttp 自动注入 traceparent
-		client := http.Client{
-			Transport: otelhttp.NewTransport(http.DefaultTransport),
-		}
+		client := http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -55,7 +55,13 @@ func SetupRoutes(r *gin.Engine) {
 		}
 		defer resp.Body.Close()
 
+		// 读取响应体
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		// 正常响应
-		c.JSON(http.StatusOK, gin.H{"message": "ok"})
+		c.JSON(http.StatusOK, gin.H{"message": string(body)})
 	})
 }
