@@ -1,4 +1,4 @@
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: hello-peng-tracing
@@ -6,11 +6,8 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: hello-peng            # Pod 上的 label
+      app: hello-peng
   tracing:
     - providers:
         - name: otel-tracing
-      customTags:
-        svc:
-          literal: { value: hello-peng }
       randomSamplingPercentage: 100

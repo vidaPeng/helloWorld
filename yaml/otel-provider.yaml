@@ -1,14 +1,20 @@
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 metadata:
+  name: ambient-telemetry-patch
   namespace: istio-system
-  name: otel-provider-patch     # 名字随意，只要跟现有的不冲突
 spec:
-  profile: empty                # 关键！不带组件
+  profile: ambient
+  components:
+    pilot:
+      k8s:
+        env:
+          - name: PILOT_ENABLE_ECDS
+            value: "true"
   meshConfig:
     enableTracing: true
     extensionProviders:
       - name: otel-tracing
         opentelemetry:
-          service: opentelemetry-collector.observability.svc.cluster.local
+          service: opentelemetry-collector.observable.svc.cluster.local
           port: 4317
