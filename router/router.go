@@ -39,7 +39,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		// 创建带 traceparent header 的 HTTP 请求
 
-		req, err := http.NewRequestWithContext(context.Background(), "GET", "test-peng-cloud-bridge.pixocial.com/ping", nil)
+		req, err := http.NewRequestWithContext(context.Background(), "GET", "test-peng-cloud-bridge.pixocial.com/test", nil)
 		//req, err := http.NewRequestWithContext(context.Background(), "GET", "http://test-oci-hello-peng.pixocial.com/ping", nil)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
