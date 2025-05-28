@@ -24,6 +24,30 @@ func SetupRoutes(r *gin.Engine) {
 		})
 	})
 
+	r.GET("/test1", func(c *gin.Context) {
+		request, err := http.NewRequest("GET", "http://hello-peng-v2.devops.svc.cluster.local/test", nil)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		// 使用 http.Client 发送请求
+		client := &http.Client{}
+		resp, err := client.Do(request)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer resp.Body.Close()
+		// 读取响应体
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		// 正常响应
+		c.JSON(http.StatusOK, gin.H{"message": string(body)})
+	})
+
 	r.GET("/test", func(c *gin.Context) {
 		// 从 Gin 的 request 中获取上下文
 		//ctx, span := tracer.Start(
