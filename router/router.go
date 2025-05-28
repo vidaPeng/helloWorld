@@ -25,7 +25,7 @@ func SetupRoutes(r *gin.Engine) {
 	})
 
 	r.GET("/test1", func(c *gin.Context) {
-		request, err := http.NewRequest("GET", "http://hello-peng-v2.devops.svc.cluster.local/test", nil)
+		request, err := http.NewRequest("GET", "http://test-hello-peng-v2.devops.pix.com/test", nil)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
