@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"helloWorld/pkg"
 	"io"
 	"net/http"
 )
@@ -18,6 +19,7 @@ func SetupRoutes(r *gin.Engine) {
 		//
 		//_, span := tracer.Start(ctx, "ping")
 		//defer span.End()
+		pkg.Info("ping")
 
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
@@ -25,6 +27,8 @@ func SetupRoutes(r *gin.Engine) {
 	})
 
 	r.GET("/test1", func(c *gin.Context) {
+		pkg.Info("test1")
+
 		request, err := http.NewRequest("GET", "http://test-hello-peng-v2.devops.pix.com/test", nil)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -49,6 +53,7 @@ func SetupRoutes(r *gin.Engine) {
 	})
 
 	r.GET("/test", func(c *gin.Context) {
+		pkg.Info("test")
 		// 从 Gin 的 request 中获取上下文
 		//ctx, span := tracer.Start(
 		//	context.Background(),
