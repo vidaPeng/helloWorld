@@ -1,18 +1,18 @@
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: nebula-store-sts
-  namespace: devops
+  name: hello-peng-v2
+  namespace: istio-ingress
 spec:
   gateways:
     - istio-ingress/istio-ingress-gateway
   hosts:
-    - test-sts.object.pix.com
+    - test-hello-peng-v2.devops.pix.com
   http:
     - match:
         - port: 80
       route:
         - destination:
-            host: nebula-store-sts
+            host: hello-peng-v2.devops.svc.cluster.local
             port:
               number: 80

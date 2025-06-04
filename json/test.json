@@ -1,0 +1,46 @@
+//**aksk_info:EwHpRJu5M3L0P1TJ8TxJsxHN**
+{
+"access_key": "EwHpRJu5M3L0P1TJ8TxJsxHN",
+"secret_key": "atWyqgKUH5j0wMYb4VUcF4yHaR5PGCVm",
+"bucket": [{
+"name": "fusion",
+"storage_account_name": "pixbizstorage",
+"region": "pixbizstorage",
+"permission": "all"
+}]
+},
+
+{
+"name": "photocat",
+"storage_account_name": "pixbizstorage",
+"region": "pixbizstorage",
+"permission": "all"
+}
+
+logic_bucket_mapping:pixbizstorage-photocat
+{
+"enabled": true,
+"sync_mode": "none",
+"is_public": true,
+"cache_control": true,
+"bucket_mapping": [
+{
+"name": "photocat-pixbizstorage",
+"provider": "minio",
+"region": "pixbizstorage",
+"status": "active",
+"priority": 1
+}
+]
+}
+
+bucket:photocat-pixbizstorage
+{
+"name": "photocat",
+"provider": "minio",
+"is_public": true,
+"require_auth": false,
+"endpoint": "https://s3.sg-azure-1.beta.pixocial.com",
+"storage_account_name": "pixbizstorage",
+"region": "pixbizstorage"
+}

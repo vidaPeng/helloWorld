@@ -1,0 +1,12 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Sidecar
+metadata:
+  name: devops-sidecar-control
+  namespace: devops
+spec:
+  workloadSelector:
+    labels:
+      app: hello-peng
+  egress:
+    - hosts:
+        - "observable/opentelemetry-collector.observable.svc.cluster.local" # 从自有命名空间导入所有配置
