@@ -1,8 +1,0 @@
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  profile: empty           # 不改动其它组件
-  values:
-    pilot:
-      env:
-        PILOT_ENABLE_TELEMETRY_API: "true"

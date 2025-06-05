@@ -72,18 +72,17 @@ config:
   exporters:
     clickhouse:      # 导出 ch
       #      endpoint: tcp://chi-simple-01-simple-0-0-0.chi-simple-01-simple-0-0.default.svc.cluster.local:9000?dial_timeout=5s               # or http://...
-      endpoint: https://cdub5ox9ot.westus3.azure.clickhouse.cloud:8443
-      username: default
-      password: Snt7jH~8WEKQD
-      database: default                                        # 自动建库
-      ttl: 24h                                                # Trace/Log/Metric 都存 1 天
+      endpoint: http://10.192.32.85:80
+      username: pixocial
+      password: NoZn2NjZm7ZaK
+      database: opentelemetry                                      # 数据库名
       compress: lz4
       async_insert: true                                      # 提高写入吞吐
       create_schema: false                                     # ⬅️ 上生产记得一定要关闭
       #      traces_table_name: otel_min_traces
       timeout: 5s
     otlp/tempo:               # ← 新增
-      endpoint: tempo-tempo-distributed-distributor.observable.svc:4317
+      endpoint: traces.observable.pix.com:9000
       tls:
         insecure: true       # 若未启用 TLS
 
@@ -103,7 +102,7 @@ config:
       attributes:
         - action: upsert
           key: cluster.name
-          value: azure-wus-k8s-beta
+          value: oci-wus-k8s-beta
 
 
   receivers:

@@ -29,7 +29,7 @@ func SetupRoutes(r *gin.Engine) {
 	r.GET("/test1", func(c *gin.Context) {
 		pkg.Info("test1")
 
-		request, err := http.NewRequest("GET", "http://test-hello-peng-v2.devops.pix.com/test", nil)
+		request, err := http.NewRequest("GET", "http://test-oci-hello-peng.pixocial.com/test", nil)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
