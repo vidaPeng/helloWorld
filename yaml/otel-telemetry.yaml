@@ -1,0 +1,22 @@
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-default
+  namespace: istio-system
+spec:
+  accessLogging:
+    - providers:
+        - name: envoy
+  tracing:
+    - providers:
+        - name: otel-tracing
+      randomSamplingPercentage: 100
+      customTags:
+        deployment_name:
+          environment:
+            name: ISTIO_META_WORKLOAD_NAME
+            defaultValue: ""
+        pixcc_client: # 这是最终出现在 span.attributes 里的 key
+          header: # 用 header 方式取值
+            name: "pixcc_client"     # 要捕获的请求头名（大小写不敏感）
+            defaultValue: ""     # 当请求里没这个头时的兜底值

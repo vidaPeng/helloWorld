@@ -34,6 +34,8 @@ func SetupRoutes(r *gin.Engine) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+		request.Header.Set("pixcc_client", "123123123")
+
 		// 使用 http.Client 发送请求
 		client := &http.Client{}
 		resp, err := client.Do(request)

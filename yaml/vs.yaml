@@ -1,18 +1,18 @@
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: hello-peng-v2
+  name: ads-service
   namespace: istio-ingress
 spec:
   gateways:
     - istio-ingress/istio-ingress-gateway
   hosts:
-    - test-hello-peng-v2.devops.pix.com
+    - ads-service.biz-bridge.pix.com
   http:
     - match:
         - port: 80
       route:
         - destination:
-            host: hello-peng-v2.devops.svc.cluster.local
+            host: ads-service.biz-bridge.svc.cluster.local
             port:
               number: 80
