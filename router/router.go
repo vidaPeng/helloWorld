@@ -84,7 +84,9 @@ func SetupRoutes(r *gin.Engine) {
 		}
 
 		// 用 otelhttp 自动注入 traceparent
-		client := http.Client{}
+		client := http.Client{
+			Transport: otelhttp.NewTransport(http.DefaultTransport),
+		}
 		resp, err := client.Do(req)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
