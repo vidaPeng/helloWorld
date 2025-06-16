@@ -3,13 +3,15 @@ package router
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 	"helloWorld/pkg"
 	"io"
 	"net/http"
 )
 
 func SetupRoutes(r *gin.Engine) {
-	//var tracer = otel.Tracer("hello_peng")
+	var tracer = otel.Tracer("hello_peng")
 	r.GET("/ping", func(c *gin.Context) {
 		//ctx := otel.GetTextMapPropagator().Extract(
 		//	// 从 header 里面自动提取 trace 链路相关数据
@@ -29,6 +31,8 @@ func SetupRoutes(r *gin.Engine) {
 	r.GET("/test1", func(c *gin.Context) {
 		pkg.Info("test1")
 
+		_, span := tracer.Start(context.Background(), "test1")
+		defer span.End()
 		request, err := http.NewRequest("GET", "http://test-oci-hello-peng.pixocial.com/test", nil)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -37,7 +41,9 @@ func SetupRoutes(r *gin.Engine) {
 		request.Header.Set("pixcc_client", "123123123")
 
 		// 使用 http.Client 发送请求
-		client := &http.Client{}
+		client := &http.Client{
+			Transport: otelhttp.NewTransport(http.DefaultTransport),
+		}
 		resp, err := client.Do(request)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
