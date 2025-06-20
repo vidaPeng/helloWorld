@@ -13,7 +13,7 @@ func InitLogger() {
 	cfg := zap.Config{
 		Level:       zap.NewAtomicLevelAt(zapcore.InfoLevel),
 		Development: false,
-		Encoding:    "console",
+		Encoding:    "json",
 		EncoderConfig: zapcore.EncoderConfig{
 			TimeKey:       "time",
 			LevelKey:      "level",
