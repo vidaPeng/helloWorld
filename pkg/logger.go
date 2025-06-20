@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"context"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -35,6 +37,20 @@ func InitLogger() {
 	}
 
 	log = logger.Sugar()
+}
+
+func addTrace(ctx context.Context, fields []zap.Field) []zap.Field {
+	sc := trace.SpanFromContext(ctx).SpanContext()
+	if sc.IsValid() {
+		fields = append(fields,
+			zap.String("trace_id", sc.TraceID().String()),
+		)
+	}
+	return fields
+}
+
+func InfoTrace(ctx context.Context, msg string, fields ...zap.Field) {
+	log.Desugar().With(addTrace(ctx, fields)...).Info(msg)
 }
 
 func Sync() {

@@ -30,9 +30,10 @@ func SetupRoutes(r *gin.Engine) {
 
 	r.GET("/test1", func(c *gin.Context) {
 		pkg.Info("test1")
-
-		_, span := tracer.Start(context.Background(), "test1")
+		ctx, span := tracer.Start(context.Background(), "test1")
 		defer span.End()
+		pkg.InfoTrace(ctx, "test111111")
+
 		request, err := http.NewRequest("GET", "http://test-oci-hello-peng.pixocial.com/test", nil)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
