@@ -1,0 +1,437 @@
+# “_internal_defaults_do_not_set” 是为了解决 Helm 的局限性而设置的临时字段。
+# 用户 **不要** 显式地设置 “._internal_defaults_do_not_set”，
+# 而应该直接设置对应的实际字段。
+# 例如，不要使用 `--set _internal_defaults_do_not_set.foo=bar`，
+# 应直接使用 `--set foo=bar`。
+_internal_defaults_do_not_set:
+  # --- 自动伸缩相关 ---
+  autoscaleEnabled: true        # 是否启用 HPA 自动伸缩
+  autoscaleMin: 1               # 最小副本数
+  autoscaleMax: 5               # 最大副本数
+  autoscaleBehavior: {}         # 自定义伸缩行为（参见 HPA 行为配置）
+  replicaCount: 1               # 静态副本数（当未启用 HPA 时生效）
+  rollingMaxSurge: 100%         # 滚动更新时，最大可新增 Pod 数（百分比或绝对值）
+  rollingMaxUnavailable: 25%    # 滚动更新时，最大不可用 Pod 数
+
+  # --- 镜像相关 ---
+  hub: ""                       # 镜像仓库（留空则使用默认）
+  tag: ""                       # 镜像标签（留空则使用 Chart 内置版本）
+  variant: ""                   # 镜像变体（通常为空，除非需要特殊构建）
+
+  # 若需要指定完整的镜像路径，可直接设置 image 为 “仓库/镜像:标签”
+  image: pilot                  # 镜像名称（默认为 pilot）
+  traceSampling: 1.0            # 追踪采样率（1.0 表示 100% 采样）
+
+  # --- 资源配额 ---
+  # 该配置适用于小规模部署，可按需调整
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2048Mi
+
+  # 设置为 `type: RuntimeDefault` 可启用默认 seccomp 配置（若节点支持）
+  seccompProfile: {}
+
+  # --- CNI 相关 ---
+  # 如果集群已安装其他 CNI 插件，可通过此处启用对接
+  cni:
+    enabled: false              # 是否使用已有 CNI
+    provider: default           # CNI 提供方标识
+
+  # 容器启动额外参数
+  extraContainerArgs: []
+
+  # 额外环境变量
+  env: {}
+
+  # --- 去污点控制器 ---
+  # 当 istio-cni Pod 就绪时，自动移除节点上的 `cni.istio.io/not-ready` 污点
+  taint:
+    enabled: false              # 是否启用去污点控制器
+    namespace: ""               # cni 所在命名空间（与 istiod 不同时需要填写）
+
+  # Pod 亲和 / 反亲和
+  affinity: {}
+
+  # Pod 容忍度
+  tolerations: []
+
+  # HPA 目标使用率
+  cpu:
+    targetAverageUtilization: 80
+  memory: {}
+  # targetAverageUtilization: 80
+
+  # --- 额外挂载 ---
+  volumeMounts: []              # 附加到 istiod 容器的挂载
+  volumes: []                   # 附加到 Pod 的卷
+  initContainers: []            # 注入到 istiod Pod 的 init 容器
+
+  # --- 节点调度 ---
+  nodeSelector: {}              # 节点选择器
+  podAnnotations: {}            # Pod 级注解
+  serviceAnnotations: {}        # Service 级注解
+  serviceAccountAnnotations: {} # ServiceAccount 注解
+  sidecarInjectorWebhookAnnotations: {} # 注入器 Webhook 注解
+  topologySpreadConstraints: [] # 拓扑分布约束
+
+  # 提供额外的根证书（PEM 格式），便于解析 JWKS URI
+  jwksResolverExtraRootCA: ""
+
+  # 控制 sidecar 与 pilot 的长连接最大存活时间，用于负载均衡
+  keepaliveMaxServerConnectionAge: 30m
+
+  # 部署级标签（应用到 Deployment 对象）
+  deploymentLabels: {}
+
+  ## --- Mesh 配置 ---
+  configMap: true               # 是否创建 mesh 配置 ConfigMap；若为 false，则使用默认或外部配置
+
+  # Pod 级标签（可用于日志/监控）
+  podLabels: {}
+
+  # --- Service 配置（IPv4/IPv6 双栈支持）---
+  ipFamilyPolicy: ""            # 取值见 Kubernetes Service ipFamilyPolicy
+  ipFamilies: []                # 指定使用的 IP 家族，例如 ["IPv4", "IPv6"]
+
+  # --- Ambient 模式 ---
+  # 若 ztunnel 与 istiod 不在同一命名空间，需要指定可信命名空间
+  trustedZtunnelNamespace: ""   # 允许来自该命名空间内 ztunnel 的连接
+
+  sidecarInjectorWebhook:
+    # 总览：使用 alwaysInjectSelector / neverInjectSelector 可对特定标签选择器的 Pod
+    # 强制注入或强制跳过注入 sidecar，不受全局策略影响。
+    # 参考：https://istio.io/docs/setup/kubernetes/additional-setup/sidecar-injection/#more-control-adding-exceptions
+    neverInjectSelector: []      # 匹配时永远不注入 sidecar 的 Selector 列表
+    alwaysInjectSelector: []     # 匹配时始终注入 sidecar 的 Selector 列表
+
+    # injectedAnnotations 会在注入完成后附加到 Pod 规格中。
+    # 典型用途：为 PSP（PodSecurityPolicy）补充注解。
+    # 例如，若 PSP 需要：
+    #   apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
+    #   apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
+    # 则可在此处声明：
+    # injectedAnnotations:
+    #   container.apparmor.security.beta.kubernetes.io/istio-init: runtime/default
+    #   container.apparmor.security.beta.kubernetes.io/istio-proxy: runtime/default
+    injectedAnnotations: {}
+
+    # 是否默认在所有命名空间注入 sidecar
+    # 例外：带有 “istio-injection: disabled” 注解的命名空间
+    # 一个集群只能启用一次。
+    enableNamespacesByDefault: false
+
+    # Istio 注入器默认仅运行一次。若之后还有其他 MutatingWebhook 继续修改 Pod，
+    # 可能导致探针等未被重写。将 reinvocationPolicy 设为 IfNeeded 可在额外变更后
+    # 重新触发注入；默认 Never 表示不再重跑。
+    reinvocationPolicy: Never
+
+    rewriteAppHTTPProbe: true    # 是否重写自定义 HTTP 探针，保持探针通过 sidecar 访问
+
+    # templates 可自定义注入模板。
+    # 例如：
+    # templates:
+    #   hello: |
+    #     metadata:
+    #       labels:
+    #         hello: world
+    # 然后在 Pod 上添加注解 `inject.istio.io/templates: hello` 即可注入该模板。
+    # 仅供高级场景使用，常规情况使用默认模板即可。
+    templates: {}
+
+    # defaultTemplates 指定注入时使用的默认模板列表。
+    # 系统自带 `sidecar` 模板；若需要额外模板，先在 templates 定义，
+    # 再将名称加入此列表，例如 ["sidecar", "hello"]。
+    defaultTemplates: []
+
+  istiodRemote:
+    # 若为 true，表示本集群仅使用远程 istiod 控制面，
+    # 本地不部署 istiod，只创建使用远程控制面所需的支撑资源。
+    enabled: false
+
+    # 当使用远程 istiod 时，可直接指定 Sidecar 注入 Webhook 的 URL，
+    # 例如：https://$remotePilotAddress:15017/inject
+    # 不应指向集群内 Service；若需 Service 形式，请使用 clientConfig.service。
+    injectionURL: ""
+
+    # 若使用 Service 形式，需要覆盖 clientConfig.service 的 path，可通过环境变量拼接。
+    # 例如：/inject/cluster/remote/net/network2
+    injectionPath: "/inject"
+
+    injectionCABundle: ""        # 提供 CA Bundle 以验证远程注入服务（若为空则沿用默认）
+
+  telemetry:
+    enabled: true                # 启用 Telemetry（Mixer v2 运行时）
+    v2:
+      enabled: true              # 启用 Telemetry v2（同时启用 metadata exchange）
+      prometheus:
+        enabled: true            # 是否启用 Prometheus 指标过滤器
+      stackdriver:
+        enabled: false           # 是否启用 Stackdriver 过滤器
+
+  # 使用多控制面（多版本）时，可通过 revision 字段区分。
+  # 该值会作为标签 “version” 以及部分资源名称后缀。
+  revision: ""
+
+  # revisionTags 提供 revision 的别名功能，供 Gateway / Sidecar 选择控制面。
+  revisionTags: []
+
+  # 为了与 Helm 兼容，可留空
+  ownerName: ""
+
+  # meshConfig 定义 Istiod 与 istio-agent 的运行时配置
+  # 详见：https://istio.io/docs/reference/config/istio.mesh.v1alpha1/
+  meshConfig:
+    enablePrometheusMerge: true          # 将 Sidecar 指标合并到 Envoy 指标树
+    accessLogFile: "/dev/stdout"         # 访问日志输出路径
+    accessLogEncoding: JSON              # 访问日志编码格式
+    proxyMetadata:                       # 以环境变量形式注入到代理
+      ISTIO_META_ENABLE_HBONE: "true"         # 启用 HBONE 隧道
+      ISTIO_META_ENABLE_HBONE_LOGGING: "true" # 启用 HBONE 日志
+      ZTUNNEL_ENABLE_L7_LOGGING: "true"       # 启用 ztunnel L7 日志
+    defaultConfig:
+      # 访问日志格式（Envoy 变量占位）
+      ISTIO_META_ACCESS_LOG_FORMAT: |
+        {
+          "start_time": "%START_TIME%",
+          "upstream_cluster": "%UPSTREAM_CLUSTER%",
+          "upstream_host": "%UPSTREAM_HOST%",
+          "host": "%REQ(:AUTHORITY)%",
+          "path": "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%",
+          "response_code": "%RESPONSE_CODE%",
+          "response_flags": "%RESPONSE_FLAGS%",
+          "client_ip": "%DOWNSTREAM_REMOTE_ADDRESS%",
+          "pod_labels": "%UPSTREAM_PEER_LABELS%",
+          "ztunnel_info": "%ENVIRONMENT(ISTIO_META_WORKLOAD_NAME)%",
+          "request_id": "%REQ(X-REQUEST-ID)%",
+          "user_agent": "%REQ(USER-AGENT)%",
+          "tls_version": "%DOWNSTREAM_TLS_VERSION%",
+          "duration": "%DURATION%",
+          "method": "%REQ(:METHOD)%"
+        }
+
+  experimental:
+    stableValidationPolicy: false       # 实验特性：启用更稳定的 CRD 校验策略
+
+  global:
+    istioNamespace: istio-system        # Istiod 所在命名空间
+
+    # 允许 “approve” 动作的 cert-signer 列表
+    # certSigners:
+    #   - clusterissuers.cert-manager.io/istio-ca
+    certSigners: []
+
+    # 为控制面启用 PodDisruptionBudget，确保滚动升级平滑
+    defaultPodDisruptionBudget:
+      enabled: true
+      # minAvailable: 1 （PDB 当前限制，暂不可修改）
+
+    # 控制面各组件默认资源请求，供 HPA 使用
+    defaultResources:
+      requests:
+        cpu: 10m
+      #   memory: 128Mi
+      # limits:
+      #   cpu: 100m
+      #   memory: 128Mi
+
+    # 全局镜像仓库与标签
+    hub: phx.ocir.io/axtuvvk3dhic/pixocial # 镜像仓库
+    tag: 1.24.3                            # 镜像版本
+    variant: ""                            # 镜像变体（debug / distroless 等）
+
+    imagePullPolicy: ""                    # 镜像拉取策略（默认：latest 为 Always，其余 IfNotPresent）
+
+    # 私有仓库需配置 imagePullSecrets
+    imagePullSecrets: []
+    # - private-registry-key
+
+    istiod:
+      enableAnalysis: false                # 启动前执行配置分析
+
+    logAsJson: false                       # 控制面日志是否输出 JSON
+
+    logging:
+      level: "default:info"                # 日志级别，格式 <scope>:<level>
+
+    omitSidecarInjectorConfigMap: false    # 是否省略 sidecar 注入 ConfigMap
+
+    # 若设为 true，Operator 管理 Webhook 配置；默认为 false（Webhook 自管理）
+    operatorManageWebhooks: false
+
+    # pod 的自定义 DNS 配置，可用于解析其他集群 Service 的域名。
+    # 典型用法：添加额外的 search 域或其他 DNS 设置。
+    # 参考：
+    # https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#dns-config
+    # 注意：Gateway Pod 往往需要与普通应用 Pod 不同的 DNS 设置（例如多集群场景），
+    # 因此此配置 **不适用于** Gateway Pod。
+    # 提示：若采用模板，请参考下方被注释的示例格式。
+    #podDNSSearchNamespaces:
+    #- global
+    #- "{{ valueOrDefault .DeploymentMeta.Namespace \"default\" }}.global"
+
+    # 建议为 Istio Pod 指定较高的 PriorityClass，避免在资源紧张时被优先驱逐。
+    # Kubernetes ≥1.11 默认提供 system-cluster-critical 与 system-node-critical。
+    # 详见：https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
+    priorityClassName: ""
+
+    proxy:
+      image: proxyv2                # sidecar 和 gateway 使用的镜像名
+
+      # 控制 sidecar 注入策略（policy 字段）
+      autoInject: enabled           # enabled / disabled / preview
+
+      # 请确保所有 Istio Helm Charts 的 clusterDomain 值保持一致
+      clusterDomain: "cluster.local"
+
+      # 组件级别日志级别；若未设置，则使用全局 logLevel
+      componentLogLevel: "misc:error"
+
+      # Ingress 入站端口允许列表
+      # 例如：--includeInboundPorts="80,8080"
+      excludeInboundPorts: ""
+      includeInboundPorts: "*"
+
+      # Egress 出站流量捕获名单
+      # 参考：https://istio.io/docs/tasks/traffic-management/egress.html#calling-external-services-directly
+      # 示例：includeIPRanges: "172.30.0.0/16,172.20.0.0/16"
+      includeIPRanges: "*"
+      excludeIPRanges: ""
+      includeOutboundPorts: ""
+      excludeOutboundPorts: ""
+
+      # sidecar 与 gateway 的日志级别
+      # 可选：trace|debug|info|warning|error|critical|off
+      logLevel: info
+
+      # Outlier 检测日志文件路径，如 /dev/stdout
+      outlierLogPath: ""
+
+      # 若设为 true，则 istio-proxy 容器将使用 privileged 权限
+      privileged: false
+
+      # 连续失败次数达到该值即认为 Readiness 失败
+      readinessFailureThreshold: 4
+      readinessInitialDelaySeconds: 0   # 就绪探针初始延迟（秒）
+      readinessPeriodSeconds: 15        # 就绪探针周期（秒）
+
+      # Startup Probe 设置
+      startupProbe:
+        enabled: true
+        failureThreshold: 600           # 失败阈值，600×1s = 10 分钟
+
+      # Sidecar 资源配额
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+
+      statusPort: 15020                # Pilot Agent 健康检查端口，0 表示禁用
+
+      # 指定 Tracer：zipkin | lightstep | datadog | stackdriver | none
+      # 若在非 GCP 环境使用 stackdriver，需设置 GOOGLE_APPLICATION_CREDENTIALS
+      tracer: "none"
+
+    proxy_init:
+      image: proxyv2                   # proxy_init 容器（配置 iptables）的镜像
+      # 跳过 iptables 的幂等性检查。仅在必要时使用，未来版本可能移除。
+      forceApplyIptables: false
+
+    # 远程 Pilot / Istiod 地址，格式 host:port
+    remotePilotAddress: ""
+
+    ##############################################################################################
+    # 以下键出现在其他 Chart 中。如需修改，请确保在所有 Istio Chart 中保持一致。            #
+    ##############################################################################################
+
+    # 自定义 CA 地址，供 Istio Agent / Ingress Gateways 获取证书
+    # 若未设置，则默认为 Istio discovery 地址
+    caAddress: ""
+
+    externalIstiod: false   # 启用远程集群控制（external istiod）
+    configCluster: false    # 将当前集群配置为 external istiod 的配置集群
+    configValidation: true  # 启用配置校验 Webhook
+
+    # meshID：Mesh 标识符。在需要合并遥测、多网格互联、跨网格策略时必须唯一。
+    # 若未指定，则默认使用 Trust Domain。
+    meshID: ""
+
+    # 配置 Split Horizon EDS 使用的 meshNetworks
+    meshNetworks: {}
+
+    mountMtlsCerts: false   # 使用挂载到 Secret Volume 的自定义 mTLS 证书
+
+    multiCluster:
+      enabled: false        # 通过 IngressGateway 连接多个集群
+      clusterName: ""       # 当前集群名称（sidecar 注入时使用）
+
+    # Network 名称，对应 meshNetworks 中定义的键
+    network: ""
+
+    # 配置控制面通信所使用的证书颁发者。目前支持 "kubernetes" 与 "istiod"；部分平台缺少
+    # Kubernetes 签名 API，因此默认值为 istiod。
+    pilotCertProvider: istiod
+
+    sds:
+      # SDS 使用的 JWT 及其 aud 字段；详见 RFC 7519 §4.1.3。
+      # 当 Istio Agent 向 CA（如 Istiod）发送 CSR 时，aud 用于确保该 JWT 仅面向 CA。
+      token:
+        aud: istio-ca
+
+    sts:
+      # 安全令牌服务（STS）用于处理令牌交换请求的端口。
+      # 设为非 0 即启用 STS 服务器。
+      servicePort: 0
+
+    # 指定工作负载证书使用的 CA 名称。
+    # 例如 caName=GkeWorkloadCertificate 时，将使用 GKE 工作负载证书。
+    # 默认为空字符串；为空时由其他机制（如环境变量 CA_PROVIDER）配置 CA。
+    caName: ""
+
+    waypoint:
+      # Waypoint 代理的资源配额
+      resources:
+        requests:
+          cpu: 1000m
+          memory: 1024Mi
+        limits:
+          cpu: "4"
+          memory: 8Gi
+
+      # 如果指定，定义 Waypoint Pod 的调度亲和 / 反亲和
+      affinity: {}
+
+      # Waypoint 代理的拓扑分布约束
+      topologySpreadConstraints: []
+
+      # Waypoint 代理的节点选择器
+      nodeSelector: {}
+
+      # Waypoint 代理的容忍度
+      tolerations: []
+
+  base:
+    # 供 istioctl 使用；若需在 base Chart 中禁用 Istio Config CRD，可设为 false
+    enableIstioConfigCRDs: true
+
+  # ——— 网关设置 ———
+  gateways:
+    # Pod 安全上下文；若未设置，将自动设为绑定 80 与 443 端口所需的最小权限。
+    # 在 Kubernetes 1.22+ 上，仅需 net.ipv4.ip_unprivileged_port_start sysctl。
+    securityContext: {}
+
+    # 若设为 type: RuntimeDefault，且容器运行时支持，则为模板化网关启用默认 seccomp 配置
+    seccompProfile: {}
+
+
+
+
+
+
+
+
+
+
