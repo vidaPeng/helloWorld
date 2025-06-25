@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/PixDevopsSre/pkg"
+	"github.com/PixDevopsSre/router"
 	"github.com/gin-gonic/gin"
-	"helloWorld/pkg"
-	"helloWorld/router"
 	"log"
 )
 

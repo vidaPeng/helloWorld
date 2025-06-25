@@ -1,4 +1,4 @@
-module helloWorld
+module github.com/PixDevopsSre/helloWorld
 
 go 1.24
 

@@ -18,15 +18,6 @@ import (
 var tracer = otel.Tracer("hello_peng")
 
 func SetupRoutes(r *gin.Engine) {
-
-	r.GET("/ping", func(c *gin.Context) {
-		pkg.Info("ping")
-
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-
 	r.GET("/getList", func(c *gin.Context) {
 		ctx, span := tracer.Start(c, "getList")
 		defer span.End()
@@ -93,6 +84,12 @@ func gormFunc(ctx context.Context) {
 	time.Sleep(1 * time.Second)
 }
 
+var client = http.Client{
+	// ✨ 用 otelhttp 自动注入 traceparent , 这一步是重点
+	Transport: otelhttp.NewTransport(http.DefaultTransport),
+	Timeout:   5 * time.Second, // 设置超时时间
+}
+
 func httpRequest(ctx context.Context, host, path, method string) ([]byte, error) {
 	// 从 Gin 的 request 中获取上下文
 	ctx, span := tracer.Start(
@@ -114,10 +111,6 @@ func httpRequest(ctx context.Context, host, path, method string) ([]byte, error)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// 用 otelhttp 自动注入 traceparent
-	client := http.Client{
-		Transport: otelhttp.NewTransport(http.DefaultTransport),
-	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to do request: %w", err)
