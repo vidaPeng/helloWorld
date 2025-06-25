@@ -2,20 +2,27 @@ package router
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"github.com/PixDevopsSre/helloWorld/pkg"
+	"github.com/PixDevopsSre/helloWorld/proto"
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 	"io"
 	"net/http"
 	"time"
 )
 
-var tracer = otel.Tracer("hello_peng")
+var (
+	tracer = otel.Tracer("hello_peng")
+	addr   = flag.String("addr", "127.0.0.1:8972", "the address to connect to")
+)
 
 func SetupRoutes(r *gin.Engine) {
 	r.GET("/getList", func(c *gin.Context) {
@@ -100,6 +107,47 @@ func SetupRoutes(r *gin.Engine) {
 
 		// 正常响应
 		c.JSON(http.StatusOK, gin.H{"traceID": span.SpanContext().TraceID().String()})
+	})
+
+	r.GET("/getGrpc", func(c *gin.Context) {
+		ctx, span := tracer.Start(c.Request.Context(), "getGrpc")
+		defer span.End()
+
+		// 这里模拟一个 gRPC 的调用
+		conn, err := grpc.NewClient(
+			*addr,
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler())) // 设置 StatsHandler)
+
+		if err != nil {
+			pkg.InfoTrace(ctx, "grpc.NewClient error")
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "grpc.NewClient failed")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+
+		defer func() {
+			if err := conn.Close(); err != nil {
+				pkg.InfoTrace(ctx, "conn.Close error")
+				span.RecordError(err)
+				span.SetStatus(codes.Error, "conn.Close failed")
+			}
+		}()
+
+		client := proto.NewGreeterClient(conn)
+		resp, err := client.SayHello(ctx, &proto.HelloRequest{
+			Name: "hello",
+		})
+		if err != nil {
+			pkg.InfoTrace(ctx, "client.SayHello error")
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "client.SayHello failed")
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": resp.GetMessage()})
+		if err != nil {
+			return
+		}
 	})
 }
 
