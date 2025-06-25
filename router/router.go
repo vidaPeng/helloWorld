@@ -21,7 +21,7 @@ import (
 
 var (
 	tracer = otel.Tracer("hello_peng")
-	addr   = flag.String("addr", "127.0.0.1:8972", "the address to connect to")
+	addr   = flag.String("addr", "test-hello-peng.devops.grpc.pix.com", "the address to connect to")
 )
 
 func SetupRoutes(r *gin.Engine) {
@@ -116,6 +116,7 @@ func SetupRoutes(r *gin.Engine) {
 		// 这里模拟一个 gRPC 的调用
 		conn, err := grpc.NewClient(
 			*addr,
+			// ✨ 使用 otelgrpc 自动注入 traceparent
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler())) // 设置 StatsHandler)
 
 		if err != nil {
