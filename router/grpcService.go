@@ -22,7 +22,7 @@ func (s *GrpcService) SayHello(ctx context.Context, req *proto.HelloRequest) (*p
 
 	// 模拟处理请求
 	reply := &proto.HelloReply{
-		Message: "Hello " + req.Name,
+		Message: span.SpanContext().TraceID().String(),
 	}
 
 	// 设置 span 的属性
