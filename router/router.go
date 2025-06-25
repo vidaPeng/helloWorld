@@ -105,7 +105,7 @@ func SetupRoutes(r *gin.Engine) {
 
 func gormFunc(ctx context.Context) {
 	_, gromSapn := tracer.Start(ctx, "gorm", trace.WithAttributes(
-		attribute.String("Sql", "select * from user where hello = world"),
+		attribute.String("Sql", "select * from user where id = 1"),
 	))
 	defer gromSapn.End()
 
