@@ -35,14 +35,14 @@ func SetupRoutes(r *gin.Engine) {
 	})
 
 	r.GET("/checkSqlList", func(c *gin.Context) {
-		ctx, span := tracer.Start(c.Request.Context(), "test")
+		ctx, span := tracer.Start(c.Request.Context(), "checkSqlList")
 		defer span.End()
 
 		// 这里模拟数据库的调用
 		gormFunc(ctx)
 
 		// 正常响应
-		c.JSON(http.StatusOK, gin.H{"message": "success"})
+		c.JSON(http.StatusOK, gin.H{"traceID": span.SpanContext().TraceID().String()})
 	})
 
 	r.GET("/getTimeout", func(c *gin.Context) {
@@ -71,14 +71,14 @@ func SetupRoutes(r *gin.Engine) {
 		time.Sleep(6 * time.Second)
 
 		// 正常响应
-		c.JSON(http.StatusOK, gin.H{"message": "success"})
+		c.JSON(http.StatusOK, gin.H{"traceID": span.SpanContext().TraceID().String()})
 	})
 
 	r.GET("/getApisixTimeout", func(c *gin.Context) {
 		ctx, span := tracer.Start(c.Request.Context(), "getApisixTimeout")
 		defer span.End()
 
-		body, err := httpRequest(ctx, "test-oci-hello-peng-timeout.pixocial.com", "/clientTimeout", "GET")
+		body, err := httpRequest(ctx, "test-oci-hello-peng-timeout.pixocial.com", "/ApisixTimeout", "GET")
 		if err != nil {
 			pkg.InfoTrace(c, "httpRequest error")
 			span.RecordError(err)
@@ -99,7 +99,7 @@ func SetupRoutes(r *gin.Engine) {
 		time.Sleep(6 * time.Second)
 
 		// 正常响应
-		c.JSON(http.StatusOK, gin.H{"message": "success"})
+		c.JSON(http.StatusOK, gin.H{"traceID": span.SpanContext().TraceID().String()})
 	})
 }
 
