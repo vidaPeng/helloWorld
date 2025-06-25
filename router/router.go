@@ -21,7 +21,7 @@ import (
 
 var (
 	tracer = otel.Tracer("hello_peng")
-	addr   = flag.String("addr", "test-hello-peng.devops.grpc.pix.com", "the address to connect to")
+	addr   = flag.String("addr", "test-hello-peng-9000.devops.grpc.pix.com", "the address to connect to")
 )
 
 func SetupRoutes(r *gin.Engine) {
