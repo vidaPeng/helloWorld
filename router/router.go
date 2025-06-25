@@ -51,7 +51,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		body, err := httpRequest(ctx, "test-oci-hello-peng.pixocial.com", "/clientTimeout", "GET")
 		if err != nil {
-			pkg.InfoTrace(c, "httpRequest error")
+			pkg.InfoTrace(c.Request.Context(), "httpRequest error")
 			// 这里可以把 span 的状态设置为错误，这了可以对 opentelemetry 做一个封装，让使用更加方便
 			span.RecordError(err)
 			span.SetStatus(codes.Error, "httpRequest failed")
@@ -80,7 +80,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		body, err := httpRequest(ctx, "test-oci-hello-peng-timeout.pixocial.com", "/ApisixTimeout", "GET")
 		if err != nil {
-			pkg.InfoTrace(c, "httpRequest error")
+			pkg.InfoTrace(c.Request.Context(), "httpRequest error")
 			span.RecordError(err)
 			span.SetStatus(codes.Error, "httpRequest failed")
 
