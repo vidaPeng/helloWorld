@@ -19,12 +19,12 @@ var tracer = otel.Tracer("hello_peng")
 
 func SetupRoutes(r *gin.Engine) {
 	r.GET("/getList", func(c *gin.Context) {
-		ctx, span := tracer.Start(c, "getList")
+		ctx, span := tracer.Start(c.Request.Context(), "getList")
 		defer span.End()
 
 		pkg.InfoTrace(ctx, "这是一个会把 traceID 信息打印出来的日志组件")
 
-		body, err := httpRequest(c, "test-oci-hello-peng.pixocial.com", "/checkSqlList", "GET")
+		body, err := httpRequest(c.Request.Context(), "test-oci-hello-peng.pixocial.com", "/checkSqlList", "GET")
 		if err != nil {
 			pkg.InfoTrace(c, "httpRequest error")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -35,7 +35,7 @@ func SetupRoutes(r *gin.Engine) {
 	})
 
 	r.GET("/checkSqlList", func(c *gin.Context) {
-		ctx, span := tracer.Start(c, "test")
+		ctx, span := tracer.Start(c.Request.Context(), "test")
 		defer span.End()
 
 		// 这里模拟数据库的调用
@@ -45,11 +45,11 @@ func SetupRoutes(r *gin.Engine) {
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
 	})
 
-	r.GET("/checkTimeout", func(c *gin.Context) {
-		ctx, span := tracer.Start(c, "checkTimeout")
+	r.GET("/getTimeout", func(c *gin.Context) {
+		ctx, span := tracer.Start(c.Request.Context(), "getTimeout")
 		defer span.End()
 
-		body, err := httpRequest(ctx, "test-oci-hello-peng.pixocial.com", "/timeout", "GET")
+		body, err := httpRequest(ctx, "test-oci-hello-peng.pixocial.com", "/clientTimeout", "GET")
 		if err != nil {
 			pkg.InfoTrace(c, "httpRequest error")
 			// 这里可以把 span 的状态设置为错误，这了可以对 opentelemetry 做一个封装，让使用更加方便
@@ -63,12 +63,40 @@ func SetupRoutes(r *gin.Engine) {
 		c.JSON(http.StatusOK, gin.H{"message": string(body)})
 	})
 
-	r.GET("/timeout", func(c *gin.Context) {
-		_, span := tracer.Start(c, "timeout")
+	r.GET("/clientTimeout", func(c *gin.Context) {
+		_, span := tracer.Start(c.Request.Context(), "clientTimeout")
 		defer span.End()
 
 		// 这里模拟一个超时的操作
-		time.Sleep(5 * time.Second)
+		time.Sleep(6 * time.Second)
+
+		// 正常响应
+		c.JSON(http.StatusOK, gin.H{"message": "success"})
+	})
+
+	r.GET("/getApisixTimeout", func(c *gin.Context) {
+		ctx, span := tracer.Start(c.Request.Context(), "getApisixTimeout")
+		defer span.End()
+
+		body, err := httpRequest(ctx, "test-oci-hello-peng-timeout.pixocial.com", "/clientTimeout", "GET")
+		if err != nil {
+			pkg.InfoTrace(c, "httpRequest error")
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "httpRequest failed")
+
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		// 正常响应
+		c.JSON(http.StatusOK, gin.H{"message": string(body)})
+	})
+
+	r.GET("/ApisixTimeout", func(c *gin.Context) {
+		_, span := tracer.Start(c.Request.Context(), "ApisixTimeout")
+		defer span.End()
+
+		// 这里模拟一个调用 APISIX 的操作
+		time.Sleep(6 * time.Second)
 
 		// 正常响应
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
