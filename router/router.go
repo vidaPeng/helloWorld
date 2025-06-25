@@ -2,25 +2,24 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"helloWorld/pkg"
 	"io"
 	"net/http"
+	"time"
 )
 
+var tracer = otel.Tracer("hello_peng")
+
 func SetupRoutes(r *gin.Engine) {
-	var tracer = otel.Tracer("hello_peng")
+
 	r.GET("/ping", func(c *gin.Context) {
-		//ctx := otel.GetTextMapPropagator().Extract(
-		//	// 从 header 里面自动提取 trace 链路相关数据
-		//	c.Request.Context(),
-		//	propagation.HeaderCarrier(c.Request.Header),
-		//)
-		//
-		//_, span := tracer.Start(ctx, "ping")
-		//defer span.End()
 		pkg.Info("ping")
 
 		c.JSON(http.StatusOK, gin.H{
@@ -28,32 +27,15 @@ func SetupRoutes(r *gin.Engine) {
 		})
 	})
 
-	r.GET("/test1", func(c *gin.Context) {
-		pkg.Info("test1")
-		ctx, span := tracer.Start(context.Background(), "test1")
+	r.GET("/getList", func(c *gin.Context) {
+		ctx, span := tracer.Start(c, "getList")
 		defer span.End()
-		pkg.InfoTrace(ctx, "test111111")
 
-		request, err := http.NewRequest("GET", "http://test-oci-hello-peng.pixocial.com/test", nil)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		request.Header.Set("pixcc_client", "123123123")
+		pkg.InfoTrace(ctx, "这是一个会把 traceID 信息打印出来的日志组件")
 
-		// 使用 http.Client 发送请求
-		client := &http.Client{
-			Transport: otelhttp.NewTransport(http.DefaultTransport),
-		}
-		resp, err := client.Do(request)
+		body, err := httpRequest(c, "test-oci-hello-peng.pixocial.com", "/checkSqlList", "GET")
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		defer resp.Body.Close()
-		// 读取响应体
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
+			pkg.InfoTrace(c, "httpRequest error")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -61,47 +43,94 @@ func SetupRoutes(r *gin.Engine) {
 		c.JSON(http.StatusOK, gin.H{"message": string(body)})
 	})
 
-	r.GET("/test", func(c *gin.Context) {
-		pkg.Info("test")
-		// 从 Gin 的 request 中获取上下文
-		//ctx, span := tracer.Start(
-		//	context.Background(),
-		//	"HelloTest",
-		//	trace.WithAttributes(
-		//		attribute.String("env", "dev"),
-		//		attribute.Int64("version", 1),
-		//		attribute.Bool("cache_hit", false),
-		//	),
-		//)
-		//defer span.End()
+	r.GET("/checkSqlList", func(c *gin.Context) {
+		ctx, span := tracer.Start(c, "test")
+		defer span.End()
 
-		// 创建带 traceparent header 的 HTTP 请求
+		// 这里模拟数据库的调用
+		gormFunc(ctx)
 
-		req, err := http.NewRequestWithContext(context.Background(), "GET", "http://test-peng-cloud-bridge.pixocial.com/test", nil)
-		//req, err := http.NewRequestWithContext(context.Background(), "GET", "http://test-oci-hello-peng.pixocial.com/ping", nil)
+		// 正常响应
+		c.JSON(http.StatusOK, gin.H{"message": "success"})
+	})
+
+	r.GET("/checkTimeout", func(c *gin.Context) {
+		ctx, span := tracer.Start(c, "checkTimeout")
+		defer span.End()
+
+		body, err := httpRequest(ctx, "test-oci-hello-peng.pixocial.com", "/timeout", "GET")
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+			pkg.InfoTrace(c, "httpRequest error")
+			// 这里可以把 span 的状态设置为错误，这了可以对 opentelemetry 做一个封装，让使用更加方便
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "httpRequest failed")
 
-		// 用 otelhttp 自动注入 traceparent
-		client := http.Client{
-			Transport: otelhttp.NewTransport(http.DefaultTransport),
-		}
-		resp, err := client.Do(req)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		defer resp.Body.Close()
-
-		// 读取响应体
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		// 正常响应
 		c.JSON(http.StatusOK, gin.H{"message": string(body)})
 	})
+
+	r.GET("/timeout", func(c *gin.Context) {
+		_, span := tracer.Start(c, "timeout")
+		defer span.End()
+
+		// 这里模拟一个超时的操作
+		time.Sleep(5 * time.Second)
+
+		// 正常响应
+		c.JSON(http.StatusOK, gin.H{"message": "success"})
+	})
+}
+
+func gormFunc(ctx context.Context) {
+	_, gromSapn := tracer.Start(ctx, "gorm", trace.WithAttributes(
+		attribute.String("Sql", "select * from user where id = 1"),
+	))
+	defer gromSapn.End()
+
+	time.Sleep(1 * time.Second)
+}
+
+func httpRequest(ctx context.Context, host, path, method string) ([]byte, error) {
+	// 从 Gin 的 request 中获取上下文
+	ctx, span := tracer.Start(
+		// 使用 tracer 创建一个新的 span，需要把 context 传入
+		ctx,
+		"httpRequest",
+		// 添加一些属性到 span 中
+		trace.WithAttributes(
+			attribute.String("hello", "peng"),
+			attribute.Int64("version", 1),
+			attribute.Bool("cache_hit", false),
+		),
+	)
+	defer span.End()
+
+	url := fmt.Sprintf("http://%s%s", host, path)
+	req, err := http.NewRequestWithContext(ctx, method, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// 用 otelhttp 自动注入 traceparent
+	client := http.Client{
+		Transport: otelhttp.NewTransport(http.DefaultTransport),
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to do request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 读取响应体
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("request failed with status: %s, body: %s", resp.Status, body)
+	}
+	return body, nil
 }

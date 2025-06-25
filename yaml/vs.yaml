@@ -1,18 +1,18 @@
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: valora-valora
+  name: ads-service
   namespace: istio-ingress
 spec:
   gateways:
     - istio-ingress/istio-ingress-gateway
   hosts:
-    - valora-valora.valora.grpc.pix.com
+    - ads-service.biz-bridge.pix.com
   http:
     - match:
         - port: 80
       route:
         - destination:
-            host: valora-valora-9900.valora.svc.cluster.local
+            host: ads-service.biz-bridge.svc.cluster.local
             port:
-              number: 9900
+              number: 80
