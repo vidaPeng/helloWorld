@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"net/http"
 	"time"
@@ -117,7 +118,8 @@ func SetupRoutes(r *gin.Engine) {
 		conn, err := grpc.NewClient(
 			*addr,
 			// ✨ 使用 otelgrpc 自动注入 traceparent
-			grpc.WithStatsHandler(otelgrpc.NewClientHandler())) // 设置 StatsHandler)
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()), // 设置 StatsHandler)
+			grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 		if err != nil {
 			pkg.InfoTrace(ctx, err.Error())
