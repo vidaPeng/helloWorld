@@ -120,10 +120,11 @@ func SetupRoutes(r *gin.Engine) {
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler())) // 设置 StatsHandler)
 
 		if err != nil {
-			pkg.InfoTrace(ctx, "grpc.NewClient error")
+			pkg.InfoTrace(ctx, err.Error())
 			span.RecordError(err)
 			span.SetStatus(codes.Error, "grpc.NewClient failed")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
 
 		defer func() {
