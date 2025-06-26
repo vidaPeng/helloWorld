@@ -131,7 +131,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		defer func() {
 			if err := conn.Close(); err != nil {
-				pkg.InfoTrace(ctx, "conn.Close error")
+				pkg.InfoTrace(ctx, err.Error())
 				span.RecordError(err)
 				span.SetStatus(codes.Error, "conn.Close failed")
 			}
@@ -142,7 +142,7 @@ func SetupRoutes(r *gin.Engine) {
 			Name: "hello",
 		})
 		if err != nil {
-			pkg.InfoTrace(ctx, "client.SayHello error")
+			pkg.InfoTrace(ctx, err.Error())
 			span.RecordError(err)
 			span.SetStatus(codes.Error, "client.SayHello failed")
 			return
