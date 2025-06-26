@@ -14,7 +14,7 @@ func InitTracer() {
 	ctx := context.Background()
 
 	exp, err := otlptracegrpc.New(ctx,
-		otlptracegrpc.WithEndpoint("opentelemetry-collector.observable.svc:4317"),
+		otlptracegrpc.WithEndpoint("opentelemetry.trace.pix.com:4317"),
 		otlptracegrpc.WithInsecure(),
 	)
 	if err != nil {
