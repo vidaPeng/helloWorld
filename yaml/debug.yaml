@@ -4,7 +4,6 @@ metadata:
   name: debug-deployment
   namespace: devops
 spec:
-  progressDeadlineSeconds: 600
   replicas: 1
   revisionHistoryLimit: 10
   selector:
@@ -24,7 +23,7 @@ spec:
         - command:
             - sleep
             - '360000000'
-          image: 'radial/busyboxplus:curl'
+          image: 'nicolaka/netshoot:latest'
           imagePullPolicy: IfNotPresent
           name: debug
           resources: {}
