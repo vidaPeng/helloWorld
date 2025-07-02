@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-nebula
+  namespace: devops
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: test-nebula-store-sts.int.pixocial.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nebula-store-sts
+                port:
+                  number: 80
+
+    - host: test-go-object.pixocial.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nebulastore-proxy
+                port:
+                  number: 80
+
+    - host: test-oci-sg-gateway-object.pixocial.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway-object
+                port:
+                  number: 80

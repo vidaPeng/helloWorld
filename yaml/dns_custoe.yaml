@@ -1,0 +1,48 @@
+apiVersion: v1
+data:
+  pix.server: |
+    pix.com {
+      errors
+      log
+      health {
+        lameduck 5s
+      }
+      ready
+      kubernetes cluster.local in-addr.arpa ip6.arpa {
+        pods insecure
+        fallthrough in-addr.arpa ip6.arpa
+      }
+      prometheus :9153
+      forward . /etc/resolv.conf
+      cache 30
+      loop
+      reload
+      loadbalance
+    }
+    
+    pixocial.com {
+      errors
+      health {
+        lameduck 5s
+      }
+      ready
+      kubernetes cluster.local in-addr.arpa ip6.arpa {
+        pods insecure
+        fallthrough in-addr.arpa ip6.arpa
+      }
+      prometheus :9153
+      hosts {
+        10.220.49.224 test-nebula-store-sts.int.pixocial.com
+        10.220.49.224 test-go-object.pixocial.com 
+        10.220.49.224  test-oci-sg-gateway-object.pixocial.com
+        fallthrough
+      }
+      forward . /etc/resolv.conf
+      cache 30
+      loop
+      reload
+    }
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
