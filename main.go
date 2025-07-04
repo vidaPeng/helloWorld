@@ -24,9 +24,9 @@ func main() {
 
 	// 1. 单独为 pprof 启动一个 HTTP 服务 (推荐)
 	go func() {
-		log.Println("Pprof server starting on localhost:6060...")
-		// ListenAndServe 会使用 DefaultServeMux，pprof 路由已注册于此
-		err := http.ListenAndServe("localhost:6060", nil)
+		log.Println("Pprof server starting on 0.0.0.0:6060...")
+		// 关键：修改为监听 0.0.0.0
+		err := http.ListenAndServe("0.0.0.0:6060", nil)
 		if err != nil {
 			log.Printf("Pprof server failed: %v", err)
 		}
