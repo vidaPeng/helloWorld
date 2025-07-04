@@ -26,6 +26,15 @@ spec:
           image: 'nicolaka/netshoot:latest'
           imagePullPolicy: IfNotPresent
           name: debug
+          # --- 添加 lifecycle hook 从这里开始 ---
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - "echo 'Installing Go...'; apk update && apk add go; echo 'Go installed successfully.'"
+          # --- 添加 lifecycle hook 到这里结束 ---
           resources: {}
           stdin: true
           terminationMessagePath: /dev/termination-log
@@ -36,4 +45,3 @@ spec:
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
-

@@ -10,6 +10,8 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"net/http"
+	_ "net/http/pprof" // 关键：匿名导入pprof包
 )
 
 func main() {
@@ -19,6 +21,16 @@ func main() {
 
 	// 初始化 OpenTelemetry 跟踪器
 	pkg.InitTracer()
+
+	// 1. 单独为 pprof 启动一个 HTTP 服务 (推荐)
+	go func() {
+		log.Println("Pprof server starting on localhost:6060...")
+		// ListenAndServe 会使用 DefaultServeMux，pprof 路由已注册于此
+		err := http.ListenAndServe("localhost:6060", nil)
+		if err != nil {
+			log.Printf("Pprof server failed: %v", err)
+		}
+	}()
 
 	// 启用 Grpc 服务器
 	go func() {
