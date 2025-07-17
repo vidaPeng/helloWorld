@@ -1,18 +1,18 @@
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: valora-valora
+  name: valora-dispense
   namespace: istio-ingress
 spec:
   gateways:
     - istio-ingress/istio-ingress-gateway
   hosts:
-    - valora-valora.valora.grpc.pix.com
+    - valora-dispense.valora.pix.com
   http:
     - match:
         - port: 80
       route:
         - destination:
-            host: valora-valora-9900.valora.svc.cluster.local
+            host: valora-dispense.valora.svc.cluster.local
             port:
-              number: 9000
+              number: 80

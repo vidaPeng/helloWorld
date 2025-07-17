@@ -8,7 +8,7 @@ IFS=$'\n\t'
 command -v kubectl >/dev/null || { echo >&2 "kubectl not found"; exit 1; }
 command -v jq       >/dev/null || { echo >&2 "jq not found"; exit 1; }
 
-DOMAIN="${1:-marvel-interface.pix.prod}"
+DOMAIN="${1:-sg-azure-appwheel-base-prod.redis.cache.windows.net}"
 
 for CTX in $(kubectl config get-contexts -o name); do
   echo "===== Context: $CTX ====="

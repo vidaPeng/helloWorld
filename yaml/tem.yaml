@@ -1,0 +1,190 @@
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: add-kv-to-trace
+  namespace: zawa
+spec:
+  tracing:
+    - providers:
+        - name: otel-tracing
+      customTags:
+        X-App-Key:
+          header:
+            name: "X-App-Key"
+            defaultValue: ""
+        X-App-Id:
+          header:
+            name: "X-App-Id"
+            defaultValue: ""
+        X-Pixcc-Client:
+          header:
+            name: "X-Pixcc-Client"
+            defaultValue: ""
+        X-Forwarded-Host:
+          header:
+            name: "X-Forwarded-Host"
+            defaultValue: ""
+        X-Version:
+          header:
+            name: "X-Version"
+            defaultValue: ""
+
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: add-kv-to-trace
+  namespace: passure
+spec:
+  tracing:
+    - providers:
+        - name: otel-tracing
+      customTags:
+        X-App-Key:
+          header:
+            name: "X-App-Key"
+            defaultValue: ""
+        X-App-Id:
+          header:
+            name: "X-App-Id"
+            defaultValue: ""
+        X-Pixcc-Client:
+          header:
+            name: "X-Pixcc-Client"
+            defaultValue: ""
+        X-Forwarded-Host:
+          header:
+            name: "X-Forwarded-Host"
+            defaultValue: ""
+        X-Version:
+          header:
+            name: "X-Version"
+            defaultValue: ""
+
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: add-kv-to-trace
+  namespace: doti
+spec:
+  tracing:
+    - providers:
+        - name: otel-tracing
+      customTags:
+        X-App-Key:
+          header:
+            name: "X-App-Key"
+            defaultValue: ""
+        X-App-Id:
+          header:
+            name: "X-App-Id"
+            defaultValue: ""
+        X-Pixcc-Client:
+          header:
+            name: "X-Pixcc-Client"
+            defaultValue: ""
+        X-Forwarded-Host:
+          header:
+            name: "X-Forwarded-Host"
+            defaultValue: ""
+        X-Version:
+          header:
+            name: "X-Version"
+            defaultValue: ""
+
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: add-kv-to-trace
+  namespace: beautyplus
+spec:
+  tracing:
+    - providers:
+        - name: otel-tracing
+      customTags:
+        X-App-Key:
+          header:
+            name: "X-App-Key"
+            defaultValue: ""
+        X-App-Id:
+          header:
+            name: "X-App-Id"
+            defaultValue: ""
+        X-Pixcc-Client:
+          header:
+            name: "X-Pixcc-Client"
+            defaultValue: ""
+        X-Forwarded-Host:
+          header:
+            name: "X-Forwarded-Host"
+            defaultValue: ""
+        X-Version:
+          header:
+            name: "X-Version"
+            defaultValue: ""
+
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: add-kv-to-trace
+  namespace: airbrush
+spec:
+  tracing:
+    - providers:
+        - name: otel-tracing
+      customTags:
+        X-App-Key:
+          header:
+            name: "X-App-Key"
+            defaultValue: ""
+        X-App-Id:
+          header:
+            name: "X-App-Id"
+            defaultValue: ""
+        X-Pixcc-Client:
+          header:
+            name: "X-Pixcc-Client"
+            defaultValue: ""
+        X-Forwarded-Host:
+          header:
+            name: "X-Forwarded-Host"
+            defaultValue: ""
+        X-Version:
+          header:
+            name: "X-Version"
+            defaultValue: ""
+
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: add-kv-to-trace
+  namespace: biz-infra
+spec:
+  tracing:
+    - providers:
+        - name: otel-tracing
+      customTags:
+        X-App-Key:
+          header:
+            name: "X-App-Key"
+            defaultValue: ""
+        X-App-Id:
+          header:
+            name: "X-App-Id"
+            defaultValue: ""
+        X-Pixcc-Client:
+          header:
+            name: "X-Pixcc-Client"
+            defaultValue: ""
+        X-Forwarded-Host:
+          header:
+            name: "X-Forwarded-Host"
+            defaultValue: ""
+        X-Version:
+          header:
+            name: "X-Version"
+            defaultValue: ""

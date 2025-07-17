@@ -1,0 +1,498 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    component.revision: '1'
+    component.version: 1.11.5
+    deployment.kubernetes.io/revision: '1'
+    kubectl.kubernetes.io/last-applied-configuration: >
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"component.revision":"1","component.version":"1.11.5"},"labels":{"app":"ingress-nginx"},"name":"nginx-ingress-controller","namespace":"kube-system"},"spec":{"minReadySeconds":0,"replicas":2,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app":"ingress-nginx"}},"strategy":{"rollingUpdate":{"maxUnavailable":1},"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"cluster-autoscaler.kubernetes.io/safe-to-evict":"false","prometheus.io/port":"10254","prometheus.io/scrape":"true"},"labels":{"app":"ingress-nginx"}},"spec":{"affinity":{"nodeAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"preference":{"matchExpressions":[{"key":"k8s.aliyun.com","operator":"NotIn","values":["true"]}]},"weight":100}],"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"type","operator":"NotIn","values":["virtual-kubelet"]},{"key":"alibabacloud.com/lingjun-worker","operator":"NotIn","values":["true"]}]}]}},"podAntiAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":[{"labelSelector":{"matchExpressions":[{"key":"app","operator":"In","values":["ingress-nginx"]}]},"topologyKey":"kubernetes.io/hostname"}]}},"containers":[{"args":["/nginx-ingress-controller","--election-id=ingress-controller-leader-nginx","--ingress-class=nginx","--watch-ingress-without-class","--controller-class=k8s.io/ingress-nginx","--configmap=$(POD_NAMESPACE)/nginx-configuration","--tcp-services-configmap=$(POD_NAMESPACE)/tcp-services","--udp-services-configmap=$(POD_NAMESPACE)/udp-services","--annotations-prefix=nginx.ingress.kubernetes.io","--publish-service=$(POD_NAMESPACE)/nginx-ingress-lb","--enable-annotation-validation","--shutdown-grace-period=30","--validating-webhook=:8443","--validating-webhook-certificate=/usr/local/certificates/cert","--validating-webhook-key=/usr/local/certificates/key","--v=2"],"env":[{"name":"POD_NAME","valueFrom":{"fieldRef":{"fieldPath":"metadata.name"}}},{"name":"POD_NAMESPACE","valueFrom":{"fieldRef":{"fieldPath":"metadata.namespace"}}},{"name":"LD_PRELOAD","value":"/usr/local/lib/libmimalloc.so"}],"image":"registry-ap-southeast-1-vpc.ack.aliyuncs.com/acs/aliyun-ingress-controller:v1.11.5-aliyun.1","imagePullPolicy":"IfNotPresent","lifecycle":{"preStop":{"exec":{"command":["/wait-shutdown"]}}},"livenessProbe":{"failureThreshold":5,"httpGet":{"path":"/healthz","port":10254,"scheme":"HTTP"},"initialDelaySeconds":10,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"name":"nginx-ingress-controller","ports":[{"containerPort":80,"name":"http","protocol":"TCP"},{"containerPort":443,"name":"https","protocol":"TCP"},{"containerPort":8443,"name":"webhook","protocol":"TCP"}],"readinessProbe":{"failureThreshold":3,"httpGet":{"path":"/healthz","port":10254,"scheme":"HTTP"},"initialDelaySeconds":10,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"resources":{"requests":{"cpu":"90m","memory":"100Mi"}},"securityContext":{"allowPrivilegeEscalation":true,"capabilities":{"add":["NET_BIND_SERVICE"],"drop":["ALL"]},"runAsUser":101},"volumeMounts":[{"mountPath":"/usr/local/certificates/","name":"webhook-cert","readOnly":true},{"mountPath":"/etc/localtime","name":"localtime","readOnly":true}]}],"dnsPolicy":"ClusterFirst","hostNetwork":false,"initContainers":[{"command":["/bin/sh","-c","if
+      [ \"$POD_IP\" != \"$HOST_IP\" ]; then\nmount -o remount rw
+      /proc/sys\nsysctl -w net.core.somaxconn=65535\nsysctl -w
+      net.ipv4.ip_local_port_range=\"1024 65535\"\nsysctl -w
+      kernel.core_uses_pid=0\nfi\n"],"env":[{"name":"POD_IP","valueFrom":{"fieldRef":{"fieldPath":"status.podIP"}}},{"name":"HOST_IP","valueFrom":{"fieldRef":{"fieldPath":"status.hostIP"}}}],"image":"registry-ap-southeast-1-vpc.ack.aliyuncs.com/acs/busybox:v1.29.2","name":"init-sysctl","securityContext":{"capabilities":{"add":["SYS_ADMIN"],"drop":["ALL"]}}}],"nodeSelector":{"kubernetes.io/os":"linux"},"priorityClassName":"system-node-critical","serviceAccountName":"ingress-nginx","terminationGracePeriodSeconds":300,"tolerations":null,"topologySpreadConstraints":[{"labelSelector":{"matchLabels":{"app":"ingress-nginx"}},"maxSkew":1,"topologyKey":"topology.kubernetes.io/zone","whenUnsatisfiable":"DoNotSchedule"}],"volumes":[{"name":"webhook-cert","secret":{"secretName":"ingress-nginx-admission"}},{"hostPath":{"path":"/etc/localtime","type":"File"},"name":"localtime"}]}}}}
+  creationTimestamp: '2025-07-02T03:01:27Z'
+  generation: 5
+  labels:
+    app: ingress-nginx
+  managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:annotations':
+            .: {}
+            'f:component.revision': {}
+            'f:component.version': {}
+            'f:kubectl.kubernetes.io/last-applied-configuration': {}
+          'f:labels':
+            .: {}
+            'f:app': {}
+        'f:spec':
+          'f:progressDeadlineSeconds': {}
+          'f:revisionHistoryLimit': {}
+          'f:selector': {}
+          'f:strategy':
+            'f:rollingUpdate':
+              .: {}
+              'f:maxSurge': {}
+              'f:maxUnavailable': {}
+            'f:type': {}
+          'f:template':
+            'f:metadata':
+              'f:annotations':
+                .: {}
+                'f:cluster-autoscaler.kubernetes.io/safe-to-evict': {}
+                'f:prometheus.io/port': {}
+                'f:prometheus.io/scrape': {}
+              'f:labels':
+                .: {}
+                'f:app': {}
+            'f:spec':
+              'f:affinity':
+                .: {}
+                'f:nodeAffinity':
+                  .: {}
+                  'f:preferredDuringSchedulingIgnoredDuringExecution': {}
+                  'f:requiredDuringSchedulingIgnoredDuringExecution': {}
+                'f:podAntiAffinity':
+                  .: {}
+                  'f:requiredDuringSchedulingIgnoredDuringExecution': {}
+              'f:containers':
+                'k:{"name":"nginx-ingress-controller"}':
+                  .: {}
+                  'f:args': {}
+                  'f:env':
+                    .: {}
+                    'k:{"name":"LD_PRELOAD"}':
+                      .: {}
+                      'f:name': {}
+                      'f:value': {}
+                    'k:{"name":"POD_NAME"}':
+                      .: {}
+                      'f:name': {}
+                      'f:valueFrom':
+                        .: {}
+                        'f:fieldRef': {}
+                    'k:{"name":"POD_NAMESPACE"}':
+                      .: {}
+                      'f:name': {}
+                      'f:valueFrom':
+                        .: {}
+                        'f:fieldRef': {}
+                  'f:image': {}
+                  'f:imagePullPolicy': {}
+                  'f:lifecycle':
+                    .: {}
+                    'f:preStop':
+                      .: {}
+                      'f:exec':
+                        .: {}
+                        'f:command': {}
+                  'f:livenessProbe':
+                    .: {}
+                    'f:failureThreshold': {}
+                    'f:httpGet':
+                      .: {}
+                      'f:path': {}
+                      'f:port': {}
+                      'f:scheme': {}
+                    'f:initialDelaySeconds': {}
+                    'f:periodSeconds': {}
+                    'f:successThreshold': {}
+                    'f:timeoutSeconds': {}
+                  'f:name': {}
+                  'f:ports':
+                    .: {}
+                    'k:{"containerPort":443,"protocol":"TCP"}':
+                      .: {}
+                      'f:containerPort': {}
+                      'f:name': {}
+                      'f:protocol': {}
+                    'k:{"containerPort":80,"protocol":"TCP"}':
+                      .: {}
+                      'f:containerPort': {}
+                      'f:name': {}
+                      'f:protocol': {}
+                    'k:{"containerPort":8443,"protocol":"TCP"}':
+                      .: {}
+                      'f:containerPort': {}
+                      'f:name': {}
+                      'f:protocol': {}
+                  'f:readinessProbe':
+                    .: {}
+                    'f:failureThreshold': {}
+                    'f:httpGet':
+                      .: {}
+                      'f:path': {}
+                      'f:port': {}
+                      'f:scheme': {}
+                    'f:initialDelaySeconds': {}
+                    'f:periodSeconds': {}
+                    'f:successThreshold': {}
+                    'f:timeoutSeconds': {}
+                  'f:resources':
+                    .: {}
+                    'f:requests':
+                      .: {}
+                      'f:cpu': {}
+                      'f:memory': {}
+                  'f:securityContext':
+                    .: {}
+                    'f:allowPrivilegeEscalation': {}
+                    'f:capabilities':
+                      .: {}
+                      'f:add': {}
+                      'f:drop': {}
+                    'f:runAsUser': {}
+                  'f:terminationMessagePath': {}
+                  'f:terminationMessagePolicy': {}
+                  'f:volumeMounts':
+                    .: {}
+                    'k:{"mountPath":"/etc/localtime"}':
+                      .: {}
+                      'f:mountPath': {}
+                      'f:name': {}
+                      'f:readOnly': {}
+                    'k:{"mountPath":"/usr/local/certificates/"}':
+                      .: {}
+                      'f:mountPath': {}
+                      'f:name': {}
+                      'f:readOnly': {}
+              'f:dnsPolicy': {}
+              'f:initContainers':
+                .: {}
+                'k:{"name":"init-sysctl"}':
+                  .: {}
+                  'f:command': {}
+                  'f:env':
+                    .: {}
+                    'k:{"name":"HOST_IP"}':
+                      .: {}
+                      'f:name': {}
+                      'f:valueFrom':
+                        .: {}
+                        'f:fieldRef': {}
+                    'k:{"name":"POD_IP"}':
+                      .: {}
+                      'f:name': {}
+                      'f:valueFrom':
+                        .: {}
+                        'f:fieldRef': {}
+                  'f:image': {}
+                  'f:imagePullPolicy': {}
+                  'f:name': {}
+                  'f:resources': {}
+                  'f:securityContext':
+                    .: {}
+                    'f:capabilities':
+                      .: {}
+                      'f:add': {}
+                      'f:drop': {}
+                  'f:terminationMessagePath': {}
+                  'f:terminationMessagePolicy': {}
+              'f:nodeSelector': {}
+              'f:priorityClassName': {}
+              'f:restartPolicy': {}
+              'f:schedulerName': {}
+              'f:securityContext': {}
+              'f:serviceAccount': {}
+              'f:serviceAccountName': {}
+              'f:terminationGracePeriodSeconds': {}
+              'f:topologySpreadConstraints':
+                .: {}
+                'k:{"topologyKey":"topology.kubernetes.io/zone","whenUnsatisfiable":"DoNotSchedule"}':
+                  .: {}
+                  'f:labelSelector': {}
+                  'f:maxSkew': {}
+                  'f:topologyKey': {}
+                  'f:whenUnsatisfiable': {}
+              'f:volumes':
+                .: {}
+                'k:{"name":"localtime"}':
+                  .: {}
+                  'f:hostPath':
+                    .: {}
+                    'f:path': {}
+                    'f:type': {}
+                  'f:name': {}
+                'k:{"name":"webhook-cert"}':
+                  .: {}
+                  'f:name': {}
+                  'f:secret':
+                    .: {}
+                    'f:defaultMode': {}
+                    'f:secretName': {}
+      manager: ACK.RC
+      operation: Update
+      time: '2025-07-02T03:01:27Z'
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:spec':
+          'f:replicas': {}
+      manager: OneConsole-App-CS
+      operation: Update
+      time: '2025-07-16T06:52:25Z'
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:annotations':
+            'f:deployment.kubernetes.io/revision': {}
+        'f:status':
+          'f:availableReplicas': {}
+          'f:conditions':
+            .: {}
+            'k:{"type":"Available"}':
+              .: {}
+              'f:lastTransitionTime': {}
+              'f:lastUpdateTime': {}
+              'f:message': {}
+              'f:reason': {}
+              'f:status': {}
+              'f:type': {}
+            'k:{"type":"Progressing"}':
+              .: {}
+              'f:lastTransitionTime': {}
+              'f:lastUpdateTime': {}
+              'f:message': {}
+              'f:reason': {}
+              'f:status': {}
+              'f:type': {}
+          'f:observedGeneration': {}
+          'f:readyReplicas': {}
+          'f:replicas': {}
+          'f:updatedReplicas': {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: '2025-07-16T06:52:25Z'
+  name: nginx-ingress-controller
+  namespace: kube-system
+  resourceVersion: '1728818569'
+  uid: 59ab3872-02fb-4cd4-b905-2f704d06f723
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: ingress-nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: 'false'
+        prometheus.io/port: '10254'
+        prometheus.io/scrape: 'true'
+      creationTimestamp: null
+      labels:
+        app: ingress-nginx
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: k8s.aliyun.com
+                    operator: NotIn
+                    values:
+                      - 'true'
+              weight: 100
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: type
+                    operator: NotIn
+                    values:
+                      - virtual-kubelet
+                  - key: alibabacloud.com/lingjun-worker
+                    operator: NotIn
+                    values:
+                      - 'true'
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - ingress-nginx
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - args:
+            - /nginx-ingress-controller
+            - '--election-id=ingress-controller-leader-nginx'
+            - '--ingress-class=nginx'
+            - '--watch-ingress-without-class'
+            - '--controller-class=k8s.io/ingress-nginx'
+            - '--configmap=$(POD_NAMESPACE)/nginx-configuration'
+            - '--tcp-services-configmap=$(POD_NAMESPACE)/tcp-services'
+            - '--udp-services-configmap=$(POD_NAMESPACE)/udp-services'
+            - '--annotations-prefix=nginx.ingress.kubernetes.io'
+            - '--publish-service=$(POD_NAMESPACE)/nginx-ingress-lb'
+            - '--enable-annotation-validation'
+            - '--shutdown-grace-period=30'
+            - '--validating-webhook=:8443'
+            - '--validating-webhook-certificate=/usr/local/certificates/cert'
+            - '--validating-webhook-key=/usr/local/certificates/key'
+            - '--v=2'
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: LD_PRELOAD
+              value: /usr/local/lib/libmimalloc.so
+          image: >-
+            registry-ap-southeast-1-vpc.ack.aliyuncs.com/acs/aliyun-ingress-controller:v1.11.5-aliyun.1
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /wait-shutdown
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: nginx-ingress-controller
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+            - containerPort: 443
+              name: https
+              protocol: TCP
+            - containerPort: 8443
+              name: webhook
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 90m
+              memory: 100Mi
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
+              drop:
+                - ALL
+            runAsUser: 101
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /usr/local/certificates/
+              name: webhook-cert
+              readOnly: true
+            - mountPath: /etc/localtime
+              name: localtime
+              readOnly: true
+      dnsPolicy: ClusterFirst
+      initContainers:
+        - command:
+            - /bin/sh
+            - '-c'
+            - |
+              if [ "$POD_IP" != "$HOST_IP" ]; then
+              mount -o remount rw /proc/sys
+              sysctl -w net.core.somaxconn=65535
+              sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+              sysctl -w kernel.core_uses_pid=0
+              fi
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
+          image: 'registry-ap-southeast-1-vpc.ack.aliyuncs.com/acs/busybox:v1.29.2'
+          imagePullPolicy: IfNotPresent
+          name: init-sysctl
+          resources: {}
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN
+              drop:
+                - ALL
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      nodeSelector:
+        kubernetes.io/os: linux
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: ingress-nginx
+      serviceAccountName: ingress-nginx
+      terminationGracePeriodSeconds: 300
+      topologySpreadConstraints:
+        - labelSelector:
+            matchLabels:
+              app: ingress-nginx
+          maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+      volumes:
+        - name: webhook-cert
+          secret:
+            defaultMode: 420
+            secretName: ingress-nginx-admission
+        - hostPath:
+            path: /etc/localtime
+            type: File
+          name: localtime
+status:
+  availableReplicas: 2
+  conditions:
+    - lastTransitionTime: '2025-07-02T03:01:27Z'
+      lastUpdateTime: '2025-07-02T03:01:49Z'
+      message: >-
+        ReplicaSet "nginx-ingress-controller-596775d748" has successfully
+        progressed.
+      reason: NewReplicaSetAvailable
+      status: 'True'
+      type: Progressing
+    - lastTransitionTime: '2025-07-16T06:52:25Z'
+      lastUpdateTime: '2025-07-16T06:52:25Z'
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: 'True'
+      type: Available
+  observedGeneration: 5
+  readyReplicas: 2
+  replicas: 2
+  updatedReplicas: 2
