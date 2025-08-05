@@ -1,18 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"github.com/PixDevopsSre/helloWorld/handle"
+	"github.com/PixDevopsSre/helloWorld/pkg"
 )
 
-var pidPath = "data/pid"
+func init() {
+	pkg.InitLogger()
+}
 
 func main() {
-	pid := os.Getpid()
-	fmt.Println(pid)
-	err := os.WriteFile(pidPath, []byte(fmt.Sprintf("%d", pid)), 0644)
-	if err != nil {
-		fmt.Println("Error writing to .pid:", err)
-		return
-	}
+	handle.S3Handle()
 }

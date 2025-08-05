@@ -2,10 +2,13 @@ package router
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"github.com/PixDevopsSre/helloWorld/pkg"
 	"github.com/PixDevopsSre/helloWorld/proto"
 	"github.com/gin-gonic/gin"
+	"github.com/google/go-querystring/query"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
@@ -16,96 +19,72 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
 
 var (
 	tracer = otel.Tracer("hello_peng")
+
+	api_key = "ca7b7e2a75f385eee979643510e38dfc57e454100c69eaa5cea334d7fc240651"
 )
 
+func generateSignature(timestamp, apiKey string) string {
+	keyMd5 := md5.Sum([]byte(apiKey))
+	keyMd5Hex := strings.ToLower(hex.EncodeToString(keyMd5[:]))
+
+	signMd5 := md5.Sum([]byte(timestamp + keyMd5Hex))
+	signMd5Hex := strings.ToLower(hex.EncodeToString(signMd5[:]))
+	return signMd5Hex
+}
+
 func SetupRoutes(r *gin.Engine) {
-	r.GET("/getList", func(c *gin.Context) {
-		ctx, span := tracer.Start(c.Request.Context(), "getList")
-		defer span.End()
+	r.POST("/getList", func(c *gin.Context) {
+		// 2. 像定义 JSON 一样定义你的请求结构体，但使用 `url` tag
+		type requestForm struct {
+			ID        string `url:"id"`
+			ApiToken  string `url:"api_token"`
+			Timestamp string `url:"timestamp"`
+		}
 
-		pkg.InfoTrace(ctx, "这是一个会把 traceID 信息打印出来的日志组件")
+		// 3. 正常地填充结构体
+		form := requestForm{
+			ID: "7",
+		}
 
-		body, err := httpRequest(c.Request.Context(), "test-oci-hello-peng.pixocial.com", "/checkSqlList", "GET")
+		// --- 认证逻辑和之前一样 ---
+		apiKey := "ca7b7e2a75f385eee979643510e38dfc57e454100c69eaa5cea334d7fc240651"
+		ts := time.Now().Unix()
+		form.Timestamp = strconv.FormatInt(ts, 10)
+		form.ApiToken = generateSignature(form.Timestamp, apiKey)
+
+		// 4. ✨ 最优雅的一步：使用库自动将结构体转换为 url.Values
+		values, err := query.Values(form)
 		if err != nil {
-			pkg.InfoTrace(c, "httpRequest error")
+			// 一般这里不会出错，除非 tag 定义有问题
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to encode form: " + err.Error()})
+			return
+		}
+
+		// 5. 将 url.Values 编码成字符串
+		encodedData := values.Encode()
+
+		// 后续代码完全不变
+		body, err := httpRequest(
+			c.Request.Context(),
+			"localhost:51613",
+			"/v1/workflow/get_workflow_id",
+			http.MethodPost,
+			strings.NewReader(encodedData),
+		)
+
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		// 正常响应
+
 		c.JSON(http.StatusOK, gin.H{"message": string(body)})
-	})
-
-	r.GET("/checkSqlList", func(c *gin.Context) {
-		ctx, span := tracer.Start(c.Request.Context(), "checkSqlList")
-		defer span.End()
-
-		// 这里模拟数据库的调用
-		gormFunc(ctx)
-
-		// 正常响应
-		c.JSON(http.StatusOK, gin.H{"traceID": span.SpanContext().TraceID().String()})
-	})
-
-	r.GET("/getTimeout", func(c *gin.Context) {
-		ctx, span := tracer.Start(c.Request.Context(), "getTimeout")
-		defer span.End()
-
-		body, err := httpRequest(ctx, "test-oci-hello-peng.pixocial.com", "/clientTimeout", "GET")
-		if err != nil {
-			pkg.InfoTrace(c.Request.Context(), "httpRequest error")
-			// 这里可以把 span 的状态设置为错误，这了可以对 opentelemetry 做一个封装，让使用更加方便
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "httpRequest failed")
-
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		// 正常响应
-		c.JSON(http.StatusOK, gin.H{"message": string(body)})
-	})
-
-	r.GET("/clientTimeout", func(c *gin.Context) {
-		_, span := tracer.Start(c.Request.Context(), "clientTimeout")
-		defer span.End()
-
-		// 这里模拟一个超时的操作
-		time.Sleep(6 * time.Second)
-
-		// 正常响应
-		c.JSON(http.StatusOK, gin.H{"traceID": span.SpanContext().TraceID().String()})
-	})
-
-	r.GET("/getApisixTimeout", func(c *gin.Context) {
-		ctx, span := tracer.Start(c.Request.Context(), "getApisixTimeout")
-		defer span.End()
-
-		body, err := httpRequest(ctx, "test-oci-hello-peng-timeout.pixocial.com", "/ApisixTimeout", "GET")
-		if err != nil {
-			pkg.InfoTrace(c.Request.Context(), "httpRequest error")
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "httpRequest failed")
-
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		// 正常响应
-		c.JSON(http.StatusOK, gin.H{"message": string(body)})
-	})
-
-	r.GET("/ApisixTimeout", func(c *gin.Context) {
-		_, span := tracer.Start(c.Request.Context(), "ApisixTimeout")
-		defer span.End()
-
-		// 这里模拟一个调用 APISIX 的操作
-		time.Sleep(6 * time.Second)
-
-		// 正常响应
-		c.JSON(http.StatusOK, gin.H{"traceID": span.SpanContext().TraceID().String()})
 	})
 
 	r.GET("/getGrpc", func(c *gin.Context) {
@@ -151,15 +130,7 @@ func SetupRoutes(r *gin.Engine) {
 			return
 		}
 	})
-}
 
-func gormFunc(ctx context.Context) {
-	_, gromSapn := tracer.Start(ctx, "gorm", trace.WithAttributes(
-		attribute.String("Sql", "select * from user where id = 1"),
-	))
-	defer gromSapn.End()
-
-	time.Sleep(1 * time.Second)
 }
 
 var client = http.Client{
@@ -168,7 +139,7 @@ var client = http.Client{
 	Timeout:   5 * time.Second, // 设置超时时间
 }
 
-func httpRequest(ctx context.Context, host, path, method string) ([]byte, error) {
+func httpRequest(ctx context.Context, host, path, method string, data io.Reader) ([]byte, error) {
 	// 从 Gin 的 request 中获取上下文
 	ctx, span := tracer.Start(
 		// 使用 tracer 创建一个新的 span，需要把 context 传入
@@ -184,10 +155,12 @@ func httpRequest(ctx context.Context, host, path, method string) ([]byte, error)
 	defer span.End()
 
 	url := fmt.Sprintf("http://%s%s", host, path)
-	req, err := http.NewRequestWithContext(ctx, method, url, nil)
+	req, err := http.NewRequestWithContext(ctx, method, url, data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
 	if err != nil {

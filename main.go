@@ -10,8 +10,6 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"net"
-	"net/http"
-	_ "net/http/pprof" // 关键：匿名导入pprof包
 )
 
 func main() {
@@ -20,17 +18,7 @@ func main() {
 	defer pkg.Sync()
 
 	// 初始化 OpenTelemetry 跟踪器
-	pkg.InitTracer()
-
-	// 1. 单独为 pprof 启动一个 HTTP 服务 (推荐)
-	go func() {
-		log.Println("Pprof server starting on 0.0.0.0:6060...")
-		// 关键：修改为监听 0.0.0.0
-		err := http.ListenAndServe("0.0.0.0:6060", nil)
-		if err != nil {
-			log.Printf("Pprof server failed: %v", err)
-		}
-	}()
+	//pkg.InitTracer()
 
 	// 启用 Grpc 服务器
 	go func() {
